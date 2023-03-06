@@ -6,13 +6,17 @@ import logging
 import textwrap
 
 from . import __version__
-from . import __toolname__ 
+from . import __toolname__
 
 
 def handle_args(args):
+    """ docstring """
 
     log_ap = argparse.ArgumentParser(prog=__toolname__, add_help=False)
-    log_ap.add_argument("-l", "--log_level", type=int, choices=range(1, 5), default=logging.INFO)
+    log_ap.add_argument(
+        "-l", "--log_level",
+        type=int, choices=range(1, 5), default=logging.INFO
+    )
     log_args, _ = log_ap.parse_known_args(args)
 
     try:
@@ -21,7 +25,9 @@ def handle_args(args):
             format='[%(asctime)s] %(message)s'
         )
     except ValueError as invalid_loglevel_err:
-        raise ValueError(f"Invalid log level: {log_args.log_level}") from invalid_loglevel_err
+        raise ValueError(
+            f"Invalid log level: {log_args.log_level}"
+        ) from invalid_loglevel_err
 
     ap = argparse.ArgumentParser(
         prog=__toolname__,
@@ -34,7 +40,7 @@ def handle_args(args):
         help=textwrap.dedent(
             """\
             Path to an sqlite3 database containing the reference annotation.
-			"""
+            """
         ),
     )
     ap.add_argument(
@@ -80,7 +86,8 @@ def handle_args(args):
         "--min_identity",
         type=float,
         default=0.97,
-        help="Minimum sequence identity [n_match/length] for an alignment to be considered.",
+        help="Minimum sequence identity [n_match/length]"
+             "for an alignment to be considered.",
     )
 
     ap.add_argument(
