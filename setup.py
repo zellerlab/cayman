@@ -46,7 +46,6 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 		entry_points={
 			"console_scripts": [
 				"cayman=cayman.__main__:main",
-				"read_count=cayman.bin.read_count:main",
 			],
 		},
 		package_data={},

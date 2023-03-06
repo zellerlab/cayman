@@ -9,8 +9,8 @@ import subprocess
 import sys
 
 # pylint: disable=W0611
-from gqlib.profilers import RegionQuantifier
-from gqlib.db.db_import import DomainBedDatabaseImporter
+from gq.profilers import RegionQuantifier
+from gq.db.db_import import DomainBedDatabaseImporter
 
 from . import __version__
 from .handle_args import handle_args
@@ -24,6 +24,74 @@ def check_bwa_index(prefix):
     return all(os.path.isfile(prefix + suffix) for suffix in suffixes)
 
 
+# pylint: disable=R0913
+def run_alignment(
+    profiler,
+    input_files,
+    bwa_index,
+    cpus_for_alignment=1,
+    min_identity=None,
+    min_seqlen=None,
+    unmarked_orphans=False,
+):
+    commands = [
+        f"bwa mem -v 1 -a -t {cpus_for_alignment} -K 10000000 {bwa_index} {' '.join(input_files)}",
+    ]
+
+    commands = " | ".join(commands)
+
+    logger.info("Used command: %s", commands)
+
+    try:
+        with subprocess.Popen(commands, shell=True, stdout=subprocess.PIPE) as read_processing_proc:
+            profiler.count_alignments(
+                read_processing_proc.stdout,
+                aln_format="sam",
+                min_identity=min_identity,
+                min_seqlen=min_seqlen,
+                unmarked_orphans=unmarked_orphans,
+            )
+    except Exception as err:
+        logger.error("Caught some exception:")
+        logger.error("%s", err)
+        raise Exception from err
+
+
+def check_input_reads(fwd=None, rev=None, singles=None, orphans=None):
+    fwd_reads = fwd.split(",") if fwd else None
+    rev_reads = rev.split(",") if rev else None
+    single_reads = singles.split(",") if singles else None
+    orphan_reads = orphans.split(",") if orphans else None
+
+    all_readsets = []
+
+    if fwd_reads and rev_reads:
+        if len(fwd_reads) == len(rev_reads):
+            all_readsets += zip((["paired"] * len(fwd_reads)), fwd_reads, rev_reads)
+        else:
+            raise ValueError(f"Found different numbers of forward/R1 {len(fwd_reads)} and reverse/R2 {len(rev_reads)} reads.")
+    elif fwd_reads:
+        logger.warning("Found -1 forward/R1 reads but no -2 reverse/R2 reads. Treating these as single-end reads.")
+        all_readsets += zip((["single"] * len(fwd_reads)), fwd_reads)
+    elif rev_reads:
+        raise ValueError("Found -2 reverse/R2 reads but no -1 forward/R1 reads.")
+
+    if single_reads:
+        all_readsets += zip((["single"] * len(single_reads)), single_reads)
+    if orphan_reads:
+        all_readsets += zip((["orphan"] * len(orphan_reads)), orphan_reads)
+
+    if not all_readsets:
+        raise ValueError("No input reads specified.")
+
+    for _, *reads in all_readsets:
+        for r in reads:
+            if not os.path.isfile(r):
+                raise ValueError(f"{r} does not seem to be a valid read file.")
+
+    return all_readsets
+
+
 def main():
 
     args = handle_args(sys.argv[1:])
@@ -32,9 +100,9 @@ def main():
     logger.info("Command: %s %s", os.path.basename(sys.argv[0]), " ".join(sys.argv[1:]))
 
     print(args)
-    if args.input_files != "-" and not all(os.path.exists(f) for f in args.input_files):
-        input_files_str = "\n".join(args.input_files)
-        raise ValueError(f"There is an issue with your input files. Please check.\n{input_files_str}")
+
+    input_data = check_input_reads(args.reads1, args.reads2, args.singles, args.orphans)
+
     if not os.path.exists(args.annotation_db):
         raise ValueError(f"{args.annotation_db} is not a valid annotation database")
     if not check_bwa_index(args.bwa_index):
@@ -45,47 +113,31 @@ def main():
             exist_ok=True, parents=True
         )
 
-    db_importer = DomainBedDatabaseImporter(logger, args.annotation_db)
+    db_importer = DomainBedDatabaseImporter(logger, args.annotation_db, single_category="cazy")
     logger.info("Finished loading database.")
 
-    fq = RegionQuantifier(
+    profiler = RegionQuantifier(
         db=db_importer,
         out_prefix=args.out_prefix,
         ambig_mode="1overN",
-        unmarked_orphans=args.unmarked_orphans,
         reference_type="domain",
     )
 
-    samtools_io_flags = "-buSh" if args.no_prefilter else "-Sh"
+    for input_type, *reads in input_data:
 
-    commands = [
-        f"bwa mem -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
-        f"samtools view -F 4 {samtools_io_flags} -",
-    ]
+        logger.info("Running %s alignment: %s", input_type, ",".join(reads))
 
-    if not args.no_prefilter:
-        logging.info("Prefiltering activated.")
-        commands += [
-            f"read_count {args.out_prefix}",
-            "samtools view -buSh -",
-            f"bedtools intersect -u -ubam -a stdin -b {args.annotation_db}",
-        ]
+        run_alignment(
+            profiler,
+            reads,
+            args.bwa_index,
+            cpus_for_alignment=args.cpus_for_alignment,
+            min_identity=args.min_identity,
+            min_seqlen=args.min_seqlen,
+            unmarked_orphans=input_type == "orphan",
+        )
 
-    logger.info("Used command: %s", " | ".join(commands))
-
-    try:
-        with subprocess.Popen(" | ".join(commands), shell=True, stdout=subprocess.PIPE) as read_processing_proc:
-            fq.process_bamfile(
-                read_processing_proc.stdout,
-                aln_format="bam",
-                min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
-            )
-
-    except Exception as err:
-        logger.error("Caught some exception:")
-        logger.error("%s", err)
-        raise Exception from err
+    profiler.finalise(restrict_reports=("rpkm",))
 
 
 if __name__ == "__main__":
