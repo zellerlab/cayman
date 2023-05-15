@@ -86,7 +86,7 @@ def handle_args(args):
         "--min_identity",
         type=float,
         default=0.97,
-        help="Minimum sequence identity [n_match/length]"
+        help="Minimum sequence identity [n_match/length] "
              "for an alignment to be considered.",
     )
 
