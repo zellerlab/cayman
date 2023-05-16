@@ -39,13 +39,18 @@ def handle_args(args):
         type=str,
         help=textwrap.dedent(
             """\
-            Path to an sqlite3 database containing the reference annotation.
+            Path to a bed4 file containing the domain annotation.
             """
         ),
     )
     ap.add_argument(
         "bwa_index",
-        type=str, help="",
+        type=str,
+        help=textwrap.dedent(
+            """\
+            Path to the bwa reference index.
+            """
+        ),
     )
 
     ap.add_argument(
