@@ -28,7 +28,9 @@ Alternatively, there is also the `--singles` option in case of single-end sequen
 
 - `--min_identity` refers to the minimum identity level (default 0.97) of the alignment of your read to a CAZyme domain for it to be included and `--min_seqlen` refers to the minimum length of the alignment to be included (default 45bp).
 
-- `--out_prefix` here you can define the text string prefix for your output files.
+- `--out_prefix` here you can define the text string prefix for your output files. If you want to store it in an output folder, then name it /path/to/folder/some_prefix; without some_prefix it will generated hidden files (since they start with a .).
+
+-  `--cpus_for_alignment` the number of cpus to use for alignment.
 
 ## Results
 - `cazy.combined_rpkm.txt` Which contains the sum of both unique and ambigious alignments.
