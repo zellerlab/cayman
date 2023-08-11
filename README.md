@@ -1,5 +1,7 @@
-## Overview
-Cayman (**C**arbohydrate **a**ctive enz**y**mes profiling of **m**et**a**ge**n**omes) is a command-line profiling tool that takes as input cleaned (quality-filtered and host-filtered) metagenomic shotgun reads and gives as output a matrix of CAZyme
+Cayman
+======
+
+Cayman (<ins>C</ins>arbohydrate <ins>a</ins>ctive enz<ins>y</ins>mes profiling of <ins>m</ins>et<ins>a</ins>ge<ins>n</ins>omes) is a command-line profiling tool that takes as input cleaned (quality-filtered and host-filtered) metagenomic shotgun reads and produces a matrix of CAZyme
 Reads-Per-Kilobase-Million (RPKM) abundances for your sample.
 
 ## Prerequisites & dependencies
@@ -18,24 +20,50 @@ Cayman can most easily be installed using ....
 For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier: 
 
 ## Running Cayman
-After installing Cayman, you can run it from the command-line by providing it with sthogun metagenomic reads as follows:
 
-`cayman --reads1 --reads2 --orphans --out_prefix --min_identity --min_seqlen`
+Cayman can be run from the command line as follows:
 
-Where 
+```
+cayman \
+  <input_options> \
+  --annotation_db </path/to/db> \
+  --bwa_index </path/to/bwa_index> \
+  [--out_prefix <prefix>] \
+  [--min_identity <float>] \
+  [--min_seqlen <int>] \
+  [--cpus_for_alignment <int>]
+```
 
-- `--annotation_db` path to a bed4 database containing the reference domain annotation. (format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
+### Mandatory parameters
 
-- `--bwa_index` refers to the path of the gene catalog.
+* The `<input_options>` parameters depend on the library layout of your samples:
 
-- `--reads1` indicates your forward reads, `--reads2` indicates your reverse reads and `--orphans` indicates orphan reads which may have lost their read pair mate during quality filtering and / or host filtering.
-Alternatively, there is also the `--singles` option in case of single-end sequencing. 
+  * Paired-end data can be specified with `--reads1 </path/to/reads1> --reads2 </path/to/reads2>`.
+  * Single-end data can be specified with `--singles </path/to/reads>`.
+  * Orphaned reads, i.e. paired-end reads that have lost their mate during an upstream quality control step, can be specified with `--orphans </path/to/orphans>`.
 
-- `--min_identity` refers to the minimum identity level (default 0.97) of the alignment of your read to a CAZyme domain for it to be included and `--min_seqlen` refers to the minimum length of the alignment to be included (default 45bp).
+  The choice of assigning an unpaired read set to be "true" single-end reads or orphan reads influences the read count distribution.
 
-- `--out_prefix` here you can define the text string prefix for your output files. If you want to store it in an output folder, then name it /path/to/folder/some_prefix; without some_prefix it will generated hidden files (since they start with a .).
+  * A read pair gets assigned a count of `2 x 0.5 = 1` (as both reads of a pair are derived from the same nucleic acid fragment.)
+  * An orphan read gets assigned a count of `1 x 0.5 = 0.5`.
+  * An read from a single-end library gets assigned a count of `1`.
 
--  `--cpus_for_alignment` the number of cpus to use for alignment.
+  Read files need to be in fastq format (best with `fastq` or `fq` file ending) and can be gzip compressed.
+
+* `--annotation_db` path to a bed4 database containing the reference domain annotation. (format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
+
+* `--bwa_index` refers to the path of the gene catalog.
+
+### Optional parameters
+
+* `--out_prefix` here you can define the text string prefix for your output files. If you want to store it in an output folder, then name it /path/to/folder/some_prefix; without some_prefix it will generated hidden files (since they start with a .).
+
+* `--min_identity` refers to the minimum identity level (default 0.97) of the alignment of your read to a CAZyme domain for it to be included.
+  
+* `--min_seqlen` refers to the minimum length of the alignment to be included (default 45bp).
+
+* `--cpus_for_alignment` the number of cpus to use for alignment.
+
 
 ## Results
 - `<out_prefix>_cazy.combined_rpkm.txt` Which contains the sum of both unique and ambigious alignments.
