@@ -1,23 +1,40 @@
 Cayman
 ======
 
-Cayman (<ins>C</ins>arbohydrate <ins>a</ins>ctive enz<ins>y</ins>mes profiling of <ins>m</ins>et<ins>a</ins>ge<ins>n</ins>omes) is a command-line profiling tool that takes as input cleaned (quality-filtered and host-filtered) metagenomic shotgun reads and produces a matrix of CAZyme
-Reads-Per-Kilobase-Million (RPKM) abundances for your sample.
+Cayman (<ins>C</ins>arbohydrate <ins>a</ins>ctive enz<ins>y</ins>mes profiling of <ins>m</ins>et<ins>a</ins>ge<ins>n</ins>omes) is a command-line profiling tool for profiling CAZyme abundances in metagenomic datasets. It takes as input (preferably) cleaned -- quality-filtered and host-filtered -- metagenomic shotgun reads and produces a matrix of CAZyme
+Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy use of the functional profiling library [`gqlib`](https://github.com/cschu/gqlib).
 
-## Prerequisites & dependencies
-- python>=3.7,<3.11
-- bedtools=2.30.0
-- bwa=0.7.17
-- samtools=1.13
-- numpy==1.24.2
-- pandas==1.5.3
-- pysam
-- gqlib>=2.11.0
+### Prerequisites
+
+#### Dependencies
+  - python>=3.7,<3.11
+  - bwa=0.7.17
+  - numpy==1.24.2
+  - pandas==1.5.3
+  - pysam
+  - gqlib>=2.11.0
+
+  #### Metagenomics reference datasets and CAZyme catalogues
+
+  Cayman uses prevalence-filtered reference data sets from the [Global Microbial Gene Catalog (GMGC)](https://gmgc.embl.de/). We annotated these datasets with our dedicated CAZyme annotation method (cf. Ducarmon & Karcher et al.). The filtered GMGC datasets and their corresponding CAZyme annotations can be downloaded from Zenodo.
+
+  [TABLE]
+
+  Prior to your first profiling run, you will have to build a bwa index from the respective GMGC reference dataset.
+
+  ```
+  bwa index -p <index_name> [-b blocksize] /path/to/dataset
+  ```
+
+  If you have enough memory available, setting `-b` to a higher value than the default (`10,000,000`), e.g. `100,000,000`, [may speed up the index generation](https://github.com/lh3/bwa/issues/104).
+
+
 
 ## Installation
 Cayman can most easily be installed using ....
 
-For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier: 
+<!-- For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier:  -->
+
 
 ## Running Cayman
 
