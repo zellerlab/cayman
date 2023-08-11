@@ -1,5 +1,5 @@
 ## Overview
-Cayman (Carbohydrate active enzymes profiling of metagenomes) is a command-line profiling tool that takes as input cleaned (quality-filtered and host-filtered) metagenomic shotgun reads and gives as output a matrix of CAZyme
+Cayman (**C**arbohydrate **a**ctive enz**y**mes profiling of **m**et**a**ge**n**omes) is a command-line profiling tool that takes as input cleaned (quality-filtered and host-filtered) metagenomic shotgun reads and gives as output a matrix of CAZyme
 Reads-Per-Kilobase-Million (RPKM) abundances for your sample.
 
 ## Prerequisites & dependencies
@@ -38,9 +38,9 @@ Alternatively, there is also the `--singles` option in case of single-end sequen
 -  `--cpus_for_alignment` the number of cpus to use for alignment.
 
 ## Results
-- `cazy.combined_rpkm.txt` Which contains the sum of both unique and ambigious alignments.
-- `cazy.unique_rpkm.txt` Which contains the sum of only unique alignments.
-- `aln_stats.txt` Which contains statistics on the alignment rates
+- `<out_prefix>_cazy.combined_rpkm.txt` Which contains the sum of both unique and ambigious alignments.
+- `<out_prefix>_cazy.unique_rpkm.txt` Which contains the sum of only unique alignments.
+- `<out_prefix>_aln_stats.txt` Which contains statistics on the alignment rates
 
 ## Reference
 - Cayman paper
