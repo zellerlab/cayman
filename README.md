@@ -13,7 +13,9 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample.
 - gqlib>=2.11.0
 
 ## Installation
-Cayman can most easily be installed using `pip`
+Cayman can most easily be installed using ....
+
+For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier
 
 ## Running Cayman
 After installing Cayman, you can run it from the command-line by providing it with sthogun metagenomic reads as follows:
@@ -26,12 +28,14 @@ Alternatively, there is also the `--singles` option in case of single-end sequen
 
 - `--min_identity` refers to the minimum identity level (default 0.97) of the alignment of your read to a CAZyme domain for it to be included and `--min_seqlen` refers to the minimum length of the alignment to be included (default 45bp).
 
+- `--out_prefix` here you can define the text string prefix for your output files.
+
 ## Results
-- fg
-- fer
-- fe
-- f
-- 
+- `cazy.combined_rpkm.txt` Which contains the sum of both unique and ambigious alignments.
+- `cazy.unique_rpkm.txt` Which contains the sum of only unique alignments.
+- `aln_stats.txt` Which contains statistics on the alignment rates
 
 ## Reference
-- Some link to gff_quant ? 
+- Cayman paper
+- A link to gff_quant?
+- https://gmgc.embl.de/
