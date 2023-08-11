@@ -15,7 +15,7 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample.
 ## Installation
 Cayman can most easily be installed using ....
 
-For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier
+For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier: 
 
 ## Running Cayman
 After installing Cayman, you can run it from the command-line by providing it with sthogun metagenomic reads as follows:
@@ -23,6 +23,11 @@ After installing Cayman, you can run it from the command-line by providing it wi
 `cayman --reads1 --reads2 --orphans --out_prefix --min_identity --min_seqlen`
 
 Where 
+
+- `--annotation_db` path to a bed4 database containing the reference domain annotation. (format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
+
+- `--bwa_index` refers to the path of the gene catalog.
+
 - `--reads1` indicates your forward reads, `--reads2` indicates your reverse reads and `--orphans` indicates orphan reads which may have lost their read pair mate during quality filtering and / or host filtering.
 Alternatively, there is also the `--singles` option in case of single-end sequencing. 
 
