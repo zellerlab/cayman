@@ -78,13 +78,13 @@ cayman \
 
 ### Optional parameters
 
-* `--out_prefix` here you can define the text string prefix for your output files. If you want to store it in an output folder, then name it /path/to/folder/some_prefix; without some_prefix it will generated hidden files (since they start with a .).
+* `--out_prefix` is a string that will be prepended to the output files (default: `"cayman"`). If you want to store the output in a specific folder, then provide a path such  as `"/path/to/folder/some_prefix"`. Without `"some_prefix"`, the output files will be hidden as they start with a `.`.
 
-* `--min_identity` refers to the minimum identity level (default 0.97) of the alignment of your read to a CAZyme domain for it to be included.
+* `--min_identity` is the minimum sequence identity level (default: 0.97) for an alignment of your read to a CAZyme domain to be included.
   
-* `--min_seqlen` refers to the minimum length of the alignment to be included (default 45bp).
+* `--min_seqlen` is the minimum alignment length (actually aligned bases without soft/hard-clipping) to be included (default: 45[bp]).
 
-* `--cpus_for_alignment` the number of cpus to use for alignment.
+* `--cpus_for_alignment` the number of cpus to use for alignment (default: 1).
 
 
 ## Results
