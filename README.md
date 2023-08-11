@@ -69,7 +69,7 @@ cayman \
 
       * A read pair gets assigned a count of `2 x 0.5 = 1` (as both reads of a pair are derived from the same nucleic acid fragment.)
       * An orphan read gets assigned a count of `1 x 0.5 = 0.5`.
-      * An read from a single-end library gets assigned a count of `1`.
+      * A read from a single-end library gets assigned a count of `1`.
   
 
 * `--annotation_db` is the path to a bed4 database containing the reference domain annotation. (format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
