@@ -57,6 +57,9 @@ def run_alignment(
                 unmarked_orphans=unmarked_orphans,
             )
     except Exception as err:
+        if isinstance(err, ValueError) and str(err).strip() == "file does not contain alignment data":
+            logger.error("Failed to align. Is `bwa mem` installed?")
+            sys.exit(1)
         logger.error("Caught some exception:")
         logger.error("%s", err)
         raise Exception from err
