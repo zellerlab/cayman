@@ -5,12 +5,11 @@
 import logging
 import os
 import pathlib
-import subprocess
 import sys
 
 # pylint: disable=W0611
 from gqlib.profilers import RegionQuantifier
-from gqlib.db.db_import import DomainBedDatabaseImporter
+from gqlib.db.db_import import SmallDatabaseImporter
 from gqlib.runners.alignment_runner import BwaMemRunner
 from gqlib.ui.validation import check_bwa_index, check_input_reads
 
@@ -91,7 +90,7 @@ def main():
             exist_ok=True, parents=True
         )
 
-    db_importer = DomainBedDatabaseImporter(
+    db_importer = SmallDatabaseImporter(
         logger, args.annotation_db, single_category="cazy"
     )
     logger.info("Finished loading database.")
