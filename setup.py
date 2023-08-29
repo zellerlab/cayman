@@ -1,11 +1,7 @@
 # coding: utf-8
 from setuptools import setup, find_packages
-from setuptools.extension import Extension
-from distutils.extension import Extension
 from codecs import open
 from os import path
-import glob
-import re
 import sys
 
 from cayman import __version__
@@ -25,7 +21,7 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 		version=version,
 		description=description,
 		long_description=long_description,
-		url="https://github.com/cschu/cayman",
+		url="https://github.com/zellerlab/cayman",
 		author="Christian Schudoma",
 		author_email="cschu1981@gmail.com",
 		license="MIT",
