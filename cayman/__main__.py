@@ -91,7 +91,7 @@ def main():
         )
 
     db_importer = SmallDatabaseImporter(
-        logger, args.annotation_db, single_category="cazy"
+        logger, args.annotation_db, single_category="cazy", sep=args.db_separator,
     )
     logger.info("Finished loading database.")
 

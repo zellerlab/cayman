@@ -39,10 +39,18 @@ def handle_args(args):
         type=str,
         help=textwrap.dedent(
             """\
-            Path to a bed4 file containing the domain annotation.
+            Path to a text file containing the domain annotation. This needs to be a 4-column file such as bed4.
             """
         ),
     )
+
+    ap.add_argument(
+        "--db_separator",
+        type=str,
+        default="\t",
+        help="Separator-character for the annotation database file Default: '\\t'."
+    )
+
     ap.add_argument(
         "bwa_index",
         type=str,
