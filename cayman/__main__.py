@@ -104,7 +104,7 @@ def main():
 
     aln_runner = BwaMemRunner(
         args.cpus_for_alignment,
-        args.reference,
+        args.bwa_index,
         sample_id=os.path.basename(args.out_prefix),
     )
 
