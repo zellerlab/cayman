@@ -56,6 +56,7 @@ def handle_args(args):
     ap.add_argument(
         "-1",
         dest="reads1",
+        nargs="*",
         type=str,
         help="A forward/R1 read fastq file. Multiple files can be separated by spaces."
     )
@@ -63,18 +64,21 @@ def handle_args(args):
     ap.add_argument(
         "-2",
         dest="reads2",
+        nargs="*",
         type=str,
         help="A comma-delimited string of reverse/R2 read fastq files. Multiple files can be separated by spaces."
     )
 
     ap.add_argument(
         "--singles", "-s",
+        nargs="*",
         type=str,
         help="A comma-delimited string of single-end read fastq files. Multiple files can be separated by spaces." 
     )
 
     ap.add_argument(
         "--orphans",
+        nargs="*",
         type=str,
         help="A comma-delimited string of orphan read fastq files. Multiple files can be separated by spaces."
     )
