@@ -1,11 +1,7 @@
 # coding: utf-8
 from setuptools import setup, find_packages
-from setuptools.extension import Extension
-from distutils.extension import Extension
 from codecs import open
 from os import path
-import glob
-import re
 import sys
 
 from cayman import __version__

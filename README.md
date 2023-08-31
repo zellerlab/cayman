@@ -14,6 +14,8 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
   - pysam
   - gqlib>=2.11.0
 
+  You will have to have a `bwa` installation. One way -- if you didn't install `cayman` via bioconda -- would be to use `conda env create -f environment.yml` (using the `environment.yml` we provide in the cayman repo.)
+
   #### Metagenomics reference datasets and CAZyme catalogues
 
   Cayman uses prevalence-filtered reference data sets from the [Global Microbial Gene Catalog (GMGC)](https://gmgc.embl.de/). We annotated these datasets with our dedicated CAZyme annotation method (cf. Ducarmon & Karcher et al.). The filtered GMGC datasets and their corresponding CAZyme annotations can be downloaded from Zenodo.
@@ -31,7 +33,10 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 
 
 ## Installation
-Cayman can most easily be installed using ....
+Cayman can most easily be installed via
+
+  - [PyPI](https://pypi.org/project/cayman/0.8.2/) (you still require your own `bwa` installation)
+  - `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
 
 <!-- For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier:  -->
 
@@ -62,17 +67,17 @@ cayman \
       * Orphaned reads, i.e. paired-end reads that have lost their mate during an upstream quality control step, can be specified with `--orphans </path/to/orphans>`.
 
  
-  3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be specified as comma-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `--reads1 sampleX_lane1_R1.fq,sampleX_lane2_R1.fq --reads2 sampleX_lane1_R2.fq,sampleX_lane2_R2.fq`)!
+  3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `--reads1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq --reads2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`)!
 
 
   4. The choice of assigning an unpaired read set to be "true" single-end reads or orphan reads influences the read count distribution.
 
-      * A read pair gets assigned a count of `2 x 0.5 = 1` (as both reads of a pair are derived from the same nucleic acid fragment.)
+      * A read pair gets assigned a count of `2 x 0.5 = 1` (as both reads of a pair are derived from the same sequenced nucleic acid fragment.)
       * An orphan read gets assigned a count of `1 x 0.5 = 0.5`.
       * A read from a single-end library gets assigned a count of `1`.
   
 
-* `--annotation_db` is the path to a bed4 database containing the reference domain annotation. (format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
+* `--annotation_db` is the path to a 4-column text file containing the reference domain annotation. (using the bed4 format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
 
 * `--bwa_index` refers to the path of the gene catalog bwa index.
 
@@ -86,11 +91,26 @@ cayman \
 
 * `--cpus_for_alignment` the number of cpus to use for alignment (default: 1).
 
+* `--db_separator` allows you to specify your own separator/delimiter in case you want to use e.g. a csv-formatted database. The bed4 restrictions such as 0-based start and 1-based end coordinates still apply.
 
 ## Results
-- `<out_prefix>_cazy.combined_rpkm.txt` Which contains the sum of both unique and ambigious alignments.
-- `<out_prefix>_cazy.unique_rpkm.txt` Which contains the sum of only unique alignments.
-- `<out_prefix>_aln_stats.txt` Which contains statistics on the alignment rates
+- `<out_prefix>.cazy.txt` contains the CAZy profile of the sample
+
+```
+feature uniq_raw        uniq_rpkm       combined_raw    combined_rpkm
+total_reads     2498819.00000   2498819.00000   2498819.00000   2498819.00000
+filtered_reads  2241860.00000   2241860.00000   2241860.00000   2241860.00000
+AA1     7.00000 16.09944        8.00000 18.91073
+AA10    0.50000 3.32879 0.50000 3.32879
+AA6     7.50000 30.03446        8.50000 33.29036
+```
+
+The first line is the header, followed by the counts of the total aligned reads and filtered reads.
+The following lines contain the counts for each CAZy family present in the sample: family name (`feature`), unique counts, unique counts rpkm-normalised, unique counts + ambiguous counts, unique counts + ambiguous counts rpkm-normalised.
+
+- `<out_prefix>.gene_counts.txt` contains the gene profiles of the sample. The format is identical to the CAZy profiles, featuring are the detected genes from the respective gene catalogue.
+
+- `<out_prefix>.aln_stats.txt` contains statistics on the alignments in the sample.
 
 ## Reference
 - Cayman paper

@@ -39,10 +39,18 @@ def handle_args(args):
         type=str,
         help=textwrap.dedent(
             """\
-            Path to a bed4 file containing the domain annotation.
+            Path to a text file containing the domain annotation. This needs to be a 4-column file such as bed4.
             """
         ),
     )
+
+    ap.add_argument(
+        "--db_separator",
+        type=str,
+        default="\t",
+        help="Separator-character for the annotation database file Default: '\\t'."
+    )
+
     ap.add_argument(
         "bwa_index",
         type=str,
@@ -56,27 +64,31 @@ def handle_args(args):
     ap.add_argument(
         "-1",
         dest="reads1",
+        nargs="*",
         type=str,
-        help="A comma-delimited string of forward/R1 read fastq files."
+        help="A forward/R1 read fastq file. Multiple files can be separated by spaces."
     )
 
     ap.add_argument(
         "-2",
         dest="reads2",
+        nargs="*",
         type=str,
-        help="A comma-delimited string of reverse/R2 read fastq files."
+        help="A comma-delimited string of reverse/R2 read fastq files. Multiple files can be separated by spaces."
     )
 
     ap.add_argument(
         "--singles", "-s",
+        nargs="*",
         type=str,
-        help="A comma-delimited string of single-end read fastq files."
+        help="A comma-delimited string of single-end read fastq files. Multiple files can be separated by spaces." 
     )
 
     ap.add_argument(
         "--orphans",
+        nargs="*",
         type=str,
-        help="A comma-delimited string of orphan read fastq files."
+        help="A comma-delimited string of orphan read fastq files. Multiple files can be separated by spaces."
     )
 
     ap.add_argument(
