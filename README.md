@@ -35,8 +35,11 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 ## Installation
 Cayman can most easily be installed via
 
-  - [PyPI](https://pypi.org/project/cayman/0.8.2/) (you still require your own `bwa` installation)
+  - [PyPI](https://pypi.org/project/cayman/) (you still require your own `bwa` installation)
   - `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
+  - [Docker]() (or build your own with the supplied [Dockerfile](Dockerfile))
+  - HPC aficionado? -- here's a [Singularity recipe](Singularity.latest)
+  - [bioconda]() tbd
 
 <!-- For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier:  -->
 
