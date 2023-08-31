@@ -74,7 +74,6 @@ def main():
         logger.info("Running %s alignment: %s", input_type, ",".join(reads))
         proc, call = aln_runner.run(
             reads,
-            None,
             single_end_reads=input_type == "single",            
         )
 
