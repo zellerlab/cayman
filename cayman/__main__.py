@@ -15,6 +15,7 @@ from gqlib.ui.validation import check_bwa_index, check_input_reads
 
 from .handle_args import handle_args
 from . import __version__
+from gqlib import __version__ as gqlib_version
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def main():
 
     args = handle_args(sys.argv[1:])
 
-    logger.info("Version: %s", __version__)
+    logger.info("Version: %s gqlib: %s", __version__, gqlib_version)
     logger.info(
         "Command: %s %s",
         os.path.basename(sys.argv[0]), " ".join(sys.argv[1:])
