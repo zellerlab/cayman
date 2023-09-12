@@ -8,63 +8,24 @@ import pathlib
 import sys
 
 # pylint: disable=W0611
-from gqlib.profilers import RegionQuantifier
 from gqlib.db.db_import import SmallDatabaseImporter
+from gqlib.profilers import RegionQuantifier
 from gqlib.runners.alignment_runner import BwaMemRunner
 from gqlib.ui.validation import check_bwa_index, check_input_reads
 
-from . import __version__
 from .handle_args import handle_args
+from . import __version__
+from gqlib import __version__ as gqlib_version
 
 
 logger = logging.getLogger(__name__)
-
-
-# # pylint: disable=R0913
-# def run_alignment(
-#     profiler,
-#     input_files,
-#     bwa_index,
-#     cpus_for_alignment=1,
-#     min_identity=None,
-#     min_seqlen=None,
-#     unmarked_orphans=False,
-# ):
-#     """ docstring """
-#     commands = [
-#         f"bwa mem -v 1 -a -t {cpus_for_alignment} "
-#         f"-K 10000000 {bwa_index} {' '.join(input_files)}",
-#     ]
-
-#     commands = " | ".join(commands)
-
-#     logger.info("Used command: %s", commands)
-
-#     try:
-#         with subprocess.Popen(
-#             commands, shell=True, stdout=subprocess.PIPE
-#         ) as read_processing_proc:
-#             profiler.count_alignments(
-#                 read_processing_proc.stdout,
-#                 aln_format="sam",
-#                 min_identity=min_identity,
-#                 min_seqlen=min_seqlen,
-#                 unmarked_orphans=unmarked_orphans,
-#             )
-#     except Exception as err:
-#         if isinstance(err, ValueError) and str(err).strip() == "file does not contain alignment data":
-#             logger.error("Failed to align. Is `bwa mem` installed?")
-#             sys.exit(1)
-#         logger.error("Caught some exception:")
-#         logger.error("%s", err)
-#         raise Exception from err
 
 
 def main():
 
     args = handle_args(sys.argv[1:])
 
-    logger.info("Version: %s", __version__)
+    logger.info("Version: %s gqlib: %s", __version__, gqlib_version)
     logger.info(
         "Command: %s %s",
         os.path.basename(sys.argv[0]), " ".join(sys.argv[1:])
@@ -111,24 +72,33 @@ def main():
     for input_type, *reads in input_data:
 
         logger.info("Running %s alignment: %s", input_type, ",".join(reads))
-        stream = aln_runner.run(
+        proc, call = aln_runner.run(
             reads,
             single_end_reads=input_type == "single",
         )
 
-        profiler.count_alignments(
-            stream, aln_format="sam", min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-        )
+        try:
+            profiler.count_alignments(
+                proc.stdout,
+                aln_format="sam",
+                min_identity=args.min_identity,
+                min_seqlen=args.min_seqlen,
+            )
 
-        # run_alignment(
-        #     profiler,
-        #     reads,
-        #     args.bwa_index,
-        #     cpus_for_alignment=args.cpus_for_alignment,
-        #     min_identity=args.min_identity,
-        #     min_seqlen=args.min_seqlen,
-        #     unmarked_orphans=input_type == "orphan",
-        # )
+        except Exception as err:
+            if isinstance(err, ValueError) and str(err).strip() == "file does not contain alignment data":
+                # pylint: disable=W1203
+                logger.error(f"Failed to align. Is `{args.aligner}` installed and on the path?")
+                logger.error("Aligner call was:")
+                logger.error("%s", call)
+                sys.exit(1)
+
+            logger.error("Encountered problems digesting the alignment stream:")
+            logger.error("%s", err)
+            logger.error("Aligner call was:")
+            logger.error("%s", call)
+            logger.error("Shutting down.")
+            sys.exit(1)
 
     profiler.finalise(restrict_reports=("raw", "rpkm",))
 
