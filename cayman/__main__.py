@@ -13,9 +13,9 @@ from gqlib.profilers import RegionQuantifier
 from gqlib.runners.alignment_runner import BwaMemRunner
 from gqlib.ui.validation import check_bwa_index, check_input_reads
 
+from gqlib import __version__ as gqlib_version
 from .handle_args import handle_args
 from . import __version__
-from gqlib import __version__ as gqlib_version
 
 
 logger = logging.getLogger(__name__)

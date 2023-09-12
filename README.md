@@ -97,7 +97,9 @@ cayman \
 
 * `--cpus_for_alignment` the number of cpus to use for alignment (default: 1).
 
-* `--db_separator` allows you to specify your own separator/delimiter in case you want to use e.g. a csv-formatted database. The bed4 restrictions such as 0-based start and 1-based end coordinates still apply.
+* `--db_separator` allows you to specify your own separator/delimiter in case you want to use e.g. a csv-formatted database. The bed4 restrictions such as 0-based start and 1-based end coordinates still unless you use `--db_coordinates hmmer`.
+
+* `--db_coordinates` one of `bed` (default) or `hmmer`. This allows you to provide 1-based, closed interval coordinates (`hmmer`) or 0,1-based, half-open interval coordinates (`bed`) in your database file.
 
 ## Results
 - `<out_prefix>.cazy.txt` contains the CAZy profile of the sample
