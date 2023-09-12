@@ -91,7 +91,7 @@ def main():
         )
 
     db_importer = SmallDatabaseImporter(
-        logger, args.annotation_db, single_category="cazy", sep=args.db_separator,
+        logger, args.annotation_db, single_category="cazy", sep=args.db_separator, coords=args.db_coordinates,
     )
     logger.info("Finished loading database.")
 
@@ -113,8 +113,7 @@ def main():
         logger.info("Running %s alignment: %s", input_type, ",".join(reads))
         stream = aln_runner.run(
             reads,
-            None,
-            single_end_reads=input_type == "single",            
+            single_end_reads=input_type == "single",
         )
 
         profiler.count_alignments(
