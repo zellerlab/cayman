@@ -8,17 +8,20 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 
 #### Dependencies
   - python>=3.7,<3.11
-  - bwa=0.7.17
-  - numpy==1.24.2
-  - pandas==1.5.3
-  - pysam
-  - gqlib>=2.11.0
+  - bwa
 
-  You will have to have a `bwa` installation. One way -- if you didn't install `cayman` via bioconda -- would be to use `conda env create -f environment.yml` (using the `environment.yml` we provide in the cayman repo.)
+  The following python libraries need to be installed
+  - numpy
+  - pandas
+  - pysam
+  - intervaltree
+  - gqlib>=2.13.0 (which should take care of all python library requirements)
+
+  You will need a `bwa` installation. One way -- if you didn't install `cayman` via bioconda or if you're not using a container -- would be to use `conda env create -f environment.yml` using the provided [environment.yml](environment.yml).
 
   #### Metagenomics reference datasets and CAZyme catalogues
 
-  Cayman uses prevalence-filtered reference data sets from the [Global Microbial Gene Catalog (GMGC)](https://gmgc.embl.de/). We annotated these datasets with our dedicated CAZyme annotation method (cf. Ducarmon & Karcher et al.). The filtered GMGC datasets and their corresponding CAZyme annotations can be downloaded from Zenodo.
+  Cayman uses prevalence-filtered reference data sets from the [Global Microbial Gene Catalog (GMGC)](https://gmgc.embl.de/). We annotated these datasets with our dedicated CAZyme annotation method (cf. [Ducarmon & Karcher et al.]()). The filtered GMGC datasets and their CAZyme annotations can be downloaded from [Zenodo]().
 
   [TABLE]
 
@@ -35,8 +38,11 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 ## Installation
 Cayman can most easily be installed via
 
-  - [PyPI](https://pypi.org/project/cayman/0.8.2/) (you still require your own `bwa` installation)
-  - `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
+  - [bioconda]() tbd
+  - [PyPI](https://pypi.org/project/cayman/) (you still require your own `bwa` installation)
+  - [Docker]() (or build your own with the supplied [Dockerfile](Dockerfile))
+  - HPC container aficionado? -- here's a [Singularity recipe](Singularity.latest)
+  - Dev? `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
 
 <!-- For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier:  -->
 
@@ -91,7 +97,9 @@ cayman \
 
 * `--cpus_for_alignment` the number of cpus to use for alignment (default: 1).
 
-* `--db_separator` allows you to specify your own separator/delimiter in case you want to use e.g. a csv-formatted database. The bed4 restrictions such as 0-based start and 1-based end coordinates still apply.
+* `--db_separator` allows you to specify your own separator/delimiter in case you want to use e.g. a csv-formatted database. The bed4 restrictions such as 0-based start and 1-based end coordinates still unless you use `--db_coordinates hmmer`.
+
+* `--db_coordinates` one of `bed` (default) or `hmmer`. This allows you to provide 1-based, closed interval coordinates (`hmmer`) or 0,1-based, half-open interval coordinates (`bed`) in your database file.
 
 ## Results
 - `<out_prefix>.cazy.txt` contains the CAZy profile of the sample
