@@ -15,7 +15,7 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
   - pandas
   - pysam
   - intervaltree
-  - gqlib>=2.14.1 (which should take care of all python library requirements)
+  - gqlib>=2.14.2 (which should take care of all python library requirements)
 
   You will need a `bwa` installation. One way -- if you didn't install `cayman` via bioconda or if you're not using a container -- would be to use `conda env create -f environment.yml` using the provided [environment.yml](environment.yml).
 
