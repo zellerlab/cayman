@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 def main():
 
     args = handle_args(sys.argv[1:])
+    args.aligner = "bwa"
 
     logger.info("Version: %s gqlib: %s", __version__, gqlib_version)
     logger.info(
