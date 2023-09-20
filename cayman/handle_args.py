@@ -45,19 +45,27 @@ def handle_args(args):
     )
 
     ap.add_argument(
-        "--db_coordinates",
+        "--db_format",
         type=str,
         default="bed",
         choices=("bed", "hmmer"),
-        help="Coordinate format for text-based annotation databases. bed=[start, end), hmmer=[start, end]"
+        help="Format of the annotation database.",
     )
 
-    ap.add_argument(
-        "--db_separator",
-        type=str,
-        default="\t",
-        help="Separator-character for the annotation database file Default: '\\t'."
-    )
+    # ap.add_argument(
+    #     "--db_coordinates",
+    #     type=str,
+    #     default="bed",
+    #     choices=("bed", "hmmer"),
+    #     help="Coordinate format for text-based annotation databases. bed=[start, end), hmmer=[start, end]"
+    # )
+
+    # ap.add_argument(
+    #     "--db_separator",
+    #     type=str,
+    #     default="\t",
+    #     help="Separator-character for the annotation database file Default: '\\t'."
+    # )
 
     ap.add_argument(
         "bwa_index",

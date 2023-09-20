@@ -53,7 +53,7 @@ def main():
         )
 
     db_importer = SmallDatabaseImporter(
-        logger, args.annotation_db, single_category="cazy", sep=args.db_separator, coords=args.db_coordinates,
+        logger, args.annotation_db, single_category="cazy", db_format=args.db_format,
     )
     logger.info("Finished loading database.")
 
@@ -89,7 +89,11 @@ def main():
         except Exception as err:
             if isinstance(err, ValueError) and str(err).strip() == "file does not contain alignment data":
                 # pylint: disable=W1203
-                logger.error(f"Failed to align. Is `{args.aligner}` installed and on the path?")
+                logger.error("Failed to align. This could have different reasons:")
+                logger.error(f"* Is `{args.aligner}` installed and on the path? Type `bwa mem` and see what happens.")
+                logger.error("* Syntax errors or missing files. Please try running the aligner call below manually to troubleshoot the problem.")
+                logger.error("* Alignment stream was interrupted, perhaps due to a memory issue.")
+                
                 logger.error("Aligner call was:")
                 logger.error("%s", call)
                 sys.exit(1)
