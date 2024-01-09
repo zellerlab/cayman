@@ -21,7 +21,7 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 
   #### Metagenomics reference datasets and CAZyme catalogues
 
-  Cayman uses prevalence-filtered reference data sets from the [Global Microbial Gene Catalog (GMGC)](https://gmgc.embl.de/). We annotated these datasets with our dedicated CAZyme annotation method (cf. [Ducarmon & Karcher et al.]()). The filtered GMGC datasets and their CAZyme annotations can be downloaded from [Zenodo]().
+  Cayman uses prevalence-filtered reference data sets from the [Global Microbial Gene Catalog (GMGC)](https://gmgc.embl.de/). We annotated these datasets with our dedicated CAZyme annotation method (cf. [Ducarmon & Karcher et al.](https://www.biorxiv.org/content/10.1101/2024.01.08.574624v1)). The filtered GMGC datasets and their CAZyme annotations can be downloaded from [[Zenodo](https://zenodo.org/uploads/10473258)].
 
   [TABLE]
 
