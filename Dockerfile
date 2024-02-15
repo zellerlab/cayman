@@ -16,7 +16,7 @@ RUN apt clean
 RUN mkdir -p /opt/software && \
 	cd /opt/software && \
 	git clone https://github.com/zellerlab/cayman && \
-	cd gff_quantifier && \
+	cd cayman && \
 	pip install .
   
 CMD ["cayman"]
