@@ -40,8 +40,8 @@ Cayman can most easily be installed via
 
   - [bioconda]() tbd
   - [PyPI](https://pypi.org/project/cayman/) (you still require your own `bwa` installation)
-  - [Docker]() (or build your own with the supplied [Dockerfile](Dockerfile))
-  - HPC container aficionado? -- here's a [Singularity recipe](Singularity.latest)
+  - [Docker](`docker pull docker://ghcr.io/zellerlab/cayman:latest`) (or build your own with the supplied [Dockerfile](Dockerfile))
+  - HPC container aficionado? -- here's a [Singularity recipe](Singularity.latest) (but you can also just use `docker://ghcr.io/zellerlab/cayman:latest`)
   - Dev? `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
 
 <!-- For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier:  -->
@@ -119,8 +119,3 @@ The following lines contain the counts for each CAZy family present in the sampl
 - `<out_prefix>.gene_counts.txt` contains the gene profiles of the sample. The format is identical to the CAZy profiles, featuring are the detected genes from the respective gene catalogue.
 
 - `<out_prefix>.aln_stats.txt` contains statistics on the alignments in the sample.
-
-## Reference
-- Cayman paper
-- A link to gff_quant?
-- https://gmgc.embl.de/
