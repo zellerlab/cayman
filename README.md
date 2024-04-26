@@ -1,5 +1,3 @@
-Cayman
-======
 ![cayman logo](cayman_logo_small.png)
 ======
 Cayman (<ins>C</ins>arbohydrate <ins>a</ins>ctive enz<ins>y</ins>mes profiling of <ins>m</ins>et<ins>a</ins>ge<ins>n</ins>omes) is a command-line profiling tool for profiling CAZyme abundances in metagenomic datasets. It takes as input (preferably) cleaned -- quality-filtered and host-filtered -- metagenomic shotgun reads and produces a matrix of CAZyme
