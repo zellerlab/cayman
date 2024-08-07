@@ -59,7 +59,7 @@ cayman \
   <input_options> \
   </path/to/db> \
   </path/to/bwa_index> \
-  --db_format hmmer
+  --db_format hmmer \
   [--out_prefix <prefix>] \
   [--min_identity <float>] \
   [--min_seqlen <int>] \
@@ -73,11 +73,11 @@ cayman \
 * `<input_options>`
 
   1. Read files need to be in fastq format (best with `fastq` or `fq` file ending) and can be gzip compressed.
+  
   2. The `<input_options>` parameters depend on the library layout of your samples:
-      * Paired-end data can be specified with `--reads1 </path/to/reads1> --reads2 </path/to/reads2>`.
-      * Single-end data can be specified with `--singles </path/to/reads>`.
-      * Orphaned reads, i.e. paired-end reads that have lost their mate during an upstream quality control step, can be specified with `--orphans </path/to/orphans>`.
-
+      * Paired-end data can be specified with `--reads1 </path/to/reads1> --reads2 </path/to/reads2>`. Each read will be counted as `0.5`.
+      * Single-end data can be specified with `--singles </path/to/reads>`. Each read will be counted as `1`.
+      * Orphaned reads, i.e. paired-end reads that have lost their mate during an upstream quality control step, can be specified with `--orphans </path/to/orphans>`. Each read will be counted as `0.5`.
  
   3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `--reads1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq --reads2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`)!
 
