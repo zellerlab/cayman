@@ -34,12 +34,23 @@ def handle_args(args):
         formatter_class=argparse.RawTextHelpFormatter,
         parents=(log_ap,),
     )
+    
     ap.add_argument(
         "annotation_db",
         type=str,
         help=textwrap.dedent(
             """\
             Path to a text file containing the domain annotation. This needs to be a 4-column file such as bed4.
+            """
+        ),
+    )
+
+    ap.add_argument(
+        "bwa_index",
+        type=str,
+        help=textwrap.dedent(
+            """\
+            Path to the bwa reference index.
             """
         ),
     )
@@ -67,15 +78,6 @@ def handle_args(args):
     #     help="Separator-character for the annotation database file Default: '\\t'."
     # )
 
-    ap.add_argument(
-        "bwa_index",
-        type=str,
-        help=textwrap.dedent(
-            """\
-            Path to the bwa reference index.
-            """
-        ),
-    )
 
     ap.add_argument(
         "-1",
