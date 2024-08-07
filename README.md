@@ -43,7 +43,7 @@ Cayman can most easily be installed via
 
   - [bioconda]() tbd
   - [PyPI](https://pypi.org/project/cayman/) (you still require your own `bwa` installation)
-  - [Docker](`docker pull docker://ghcr.io/zellerlab/cayman:latest`) (or build your own with the supplied [Dockerfile](Dockerfile))
+  - [Docker](docker pull docker://ghcr.io/zellerlab/cayman:latest) (or build your own with the supplied [Dockerfile](Dockerfile))
   - HPC container aficionado? -- here's a [Singularity recipe](Singularity.latest) (but you can also just use `docker://ghcr.io/zellerlab/cayman:latest`)
   - Dev? `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
 
@@ -57,13 +57,16 @@ Cayman can be run from the command line as follows:
 ```
 cayman \
   <input_options> \
-  --annotation_db </path/to/db> \
-  --bwa_index </path/to/bwa_index> \
+  </path/to/db> \
+  </path/to/bwa_index> \
+  --db_format hmmer
   [--out_prefix <prefix>] \
   [--min_identity <float>] \
   [--min_seqlen <int>] \
   [--cpus_for_alignment <int>]
 ```
+
+`cayman`'s default input format is bed4. `--db_format hmmer` is required when using the csv-formatted hmmer annotations from [Zenodo](https://zenodo.org/records/10473258).
 
 ### Mandatory parameters
 
