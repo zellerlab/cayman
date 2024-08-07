@@ -59,21 +59,18 @@ cayman \
   <input_options> \
   </path/to/db> \
   </path/to/bwa_index> \
-  --db_format hmmer \
   [--out_prefix <prefix>] \
   [--min_identity <float>] \
   [--min_seqlen <int>] \
   [--cpus_for_alignment <int>]
 ```
 
-`cayman`'s default input format is bed4. `--db_format hmmer` is required when using the csv-formatted hmmer annotations from [Zenodo](https://zenodo.org/records/10473258).
-
 ### Mandatory parameters
 
 * `<input_options>`
 
   1. Read files need to be in fastq format (best with `fastq` or `fq` file ending) and can be gzip compressed.
-  
+
   2. The `<input_options>` parameters depend on the library layout of your samples:
       * Paired-end data can be specified with `--reads1 </path/to/reads1> --reads2 </path/to/reads2>`. Each read will be counted as `0.5`.
       * Single-end data can be specified with `--singles </path/to/reads>`. Each read will be counted as `1`.
