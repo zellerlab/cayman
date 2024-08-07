@@ -34,6 +34,7 @@ def handle_args(args):
         formatter_class=argparse.RawTextHelpFormatter,
         parents=(log_ap,),
     )
+    
     ap.add_argument(
         "annotation_db",
         type=str,
@@ -45,9 +46,19 @@ def handle_args(args):
     )
 
     ap.add_argument(
+        "bwa_index",
+        type=str,
+        help=textwrap.dedent(
+            """\
+            Path to the bwa reference index.
+            """
+        ),
+    )
+
+    ap.add_argument(
         "--db_format",
         type=str,
-        default="bed",
+        default="hmmer",
         choices=("bed", "hmmer"),
         help="Format of the annotation database.",
     )
@@ -67,15 +78,6 @@ def handle_args(args):
     #     help="Separator-character for the annotation database file Default: '\\t'."
     # )
 
-    ap.add_argument(
-        "bwa_index",
-        type=str,
-        help=textwrap.dedent(
-            """\
-            Path to the bwa reference index.
-            """
-        ),
-    )
 
     ap.add_argument(
         "-1",
