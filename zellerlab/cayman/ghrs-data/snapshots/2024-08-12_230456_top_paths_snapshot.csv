@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/zellerlab/cayman,22,8
+/zellerlab/cayman/issues,12,4
+/zellerlab/cayman/tree/main/cayman,10,3
+/zellerlab/cayman/blob/main/cayman/bin/__init__.py,10,1
+/zellerlab/cayman/blob/main/cayman/__main__.py,6,2
+/zellerlab/cayman/blob/main/environment.yml,4,2
+/zellerlab/cayman/blob/main/setup.cfg,4,2
+/zellerlab/cayman/blob/main/cayman/__init__.py,4,1
+/zellerlab/cayman/blob/main/handle_args.py,4,1
+/zellerlab/cayman/blob/main/requirements.txt,4,1
