@@ -92,21 +92,21 @@ def handle_args(args):
         dest="reads2",
         nargs="*",
         type=str,
-        help="A comma-delimited string of reverse/R2 read fastq files. Multiple files can be separated by spaces."
+        help="A reverse/R2 read fastq file. Multiple files can be separated by spaces."
     )
 
     ap.add_argument(
         "--singles", "-s",
         nargs="*",
         type=str,
-        help="A comma-delimited string of single-end read fastq files. Multiple files can be separated by spaces." 
+        help="A single-end library read fastq file. Multiple files can be separated by spaces." 
     )
 
     ap.add_argument(
         "--orphans",
         nargs="*",
         type=str,
-        help="A comma-delimited string of orphan read fastq files. Multiple files can be separated by spaces."
+        help="An orphan read fastq file. Multiple files can be separated by spaces."
     )
 
     ap.add_argument(
