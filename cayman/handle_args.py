@@ -45,12 +45,15 @@ def handle_args(args):
     subparsers = ap.add_subparsers(dest="command", required=True)
 
     annotate_proteome_ap = subparsers.add_parser("annotate_proteome", help="Annotate proteome with CAZy domains.")
-    annotate_proteome_ap.add_argument("--xyz", type=str)
+
+    annotate_proteome_ap.add_argument("proteins", type=str)
+    annotate_proteome_ap.add_argument("hmmdb", type=str)
+    annotate_proteome_ap.add_argument("--output_file", "-o", type=str, default="cazy_annotations.csv")
+    annotate_proteome_ap.add_argument("--threads", "-t", type=int, default=1)
 
     annotate_proteome_ap.set_defaults(func=run_proteome_annotation)
 
     profile_ap = subparsers.add_parser("profile", help="Profile WGS reads.")
-    # profile_ap.add_argument("--xyz", type=str)
     
     profile_ap.add_argument(
         "annotation_db",
