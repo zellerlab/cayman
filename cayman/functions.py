@@ -102,7 +102,7 @@ def run_proteome_annotation(args):
 
 	annotator = CazyAnnotator()
 	print("Reading HMMs")
-	annotator.read_hmms(hmmdb_path=os.path.join(args.hmmdb, "hmms"))  # path_to_hmm_file="/g/scb2/zeller/karcher/CAZY_project_v2/scripts/absolute_paths_all_cv_hmms_scratch.txt") # Good idea to move HMMs to scratch for faster input
+	annotator.read_hmms(os.path.join(args.hmmdb, "hmms"))  # path_to_hmm_file="/g/scb2/zeller/karcher/CAZY_project_v2/scripts/absolute_paths_all_cv_hmms_scratch.txt") # Good idea to move HMMs to scratch for faster input
 	print("Reading sequences")
 	annotator.read_sequences(path_to_sequences=args.proteins)  # "/g/scb/zeller/karcher/kyanna_cazy_annotations/scripts/../results/prokka/086_scaffolds.faa")
 	print("Annotating sequences (can take a few minutes; be patient)")

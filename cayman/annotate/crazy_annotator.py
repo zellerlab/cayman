@@ -81,7 +81,7 @@ class CazyAnnotator:
 
     def read_hmms(self, path_to_hmm_file):
         self.hmms = hmms()
-        self.hmms.read_hmms(path_to_hmm_file)
+        self.hmms.read_hmms(hmmdb_path=path_to_hmm_file)
 
     def read_sequences(self, path_to_sequences):
         self.sequences = sequences()
@@ -161,7 +161,7 @@ class CazyAnnotator:
         annotations_with_fold_counts_series = pd.Series(annotations_with_fold_counts_series)
         
         print("Merging annotations...")
-        self.annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(annotator.merge_annots)))
+        self.annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(CazyAnnotator.merge_annots)))
 
         tmp2 = self.annotations_filtered.groupby(["sequenceID"])
         aSeries = []
@@ -171,7 +171,7 @@ class CazyAnnotator:
             aSeries.append(group)
         aSeries = pd.Series(aSeries)
         print("Resolving overlapping annotations...")
-        self.annotations_filtered = pd.concat(list(aSeries.apply(annotator.resolve_overlapping_annotations)))
+        self.annotations_filtered = pd.concat(list(aSeries.apply(CazyAnnotator.resolve_overlapping_annotations)))
 
         # Write start and end coordinates out as integers and not floats
         self.annotations_filtered['start'] = [int(x) for x in self.annotations_filtered['start']]
