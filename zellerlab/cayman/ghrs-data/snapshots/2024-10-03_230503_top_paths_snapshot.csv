@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/zellerlab/cayman,23,11
+/zellerlab/cayman/tree/feature/proteome_annotation_20240921,5,2
+/zellerlab/cayman/tree/feature/proteome_annotation_20240921/cayman/annotate,5,1
+/zellerlab/cayman/tree/feature/proteome_annotation_20240921/cayman,4,1
+/zellerlab/cayman/issues/8,3,3
+/zellerlab/cayman/blob/main/environment.yml,3,2
+/zellerlab/cayman/pulls,3,2
+/zellerlab/cayman/issues,2,2
+/zellerlab/cayman/blob/feature/proteome_annotation_20240921/cayman/annotate/crazy_annotator.py,2,1
+/zellerlab/cayman/blob/feature/proteome_annotation_20240921/cayman/annotate/__init__.py,2,1
