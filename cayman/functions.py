@@ -102,11 +102,11 @@ def run_proteome_annotation(args):
 
 	annotator = CazyAnnotator()
 	print("Reading HMMs")
-	annotator.read_hmms(os.path.join(args.hmmdb, "hmms"))
+	annotator.read_hmms(os.path.join(args.hmmdb))
 	print("Reading sequences")
 	annotator.read_sequences(path_to_sequences=args.proteins)
 	print("Annotating sequences (can take a few minutes; be patient)")
 	annotator.annotate_sequences_with_all_hmms(threads=args.threads)
 	print("Filtering and merging annotations over folds")
-	annotator.curate_annotations(precomputed_hmm_cutoffs=os.path.join(args.hmmdb, "cutoffs.csv"))
+	annotator.curate_annotations(precomputed_hmm_cutoffs=os.path.join(args.cutoffs))
 	annotator.annotations_filtered.to_csv(args.output_file)
