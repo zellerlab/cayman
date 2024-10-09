@@ -293,9 +293,18 @@ class CazyAnnotator:
     @staticmethod
     def merge_annots(df):
         from collections import defaultdict
-        from scipy.stats.mstats import gmean
+        #from scipy.stats.mstats import gmean as gmean_old # This import triggers the subnormals warning - let's not get into the details 
+        from statistics import geometric_mean
         import numpy as np
         import pandas as pd
+    
+        # Emulate scipy.stats.mstats.gmean
+        def gmean(iterable):
+            if all(x == 0 for x in iterable):
+                return 0
+            else:
+                return(geometric_mean(iterable))
+
         numFolds = list(df['num_folds'])[0]
         if (np.isnan(numFolds)):
             numFolds = 1
