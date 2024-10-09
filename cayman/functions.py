@@ -108,5 +108,5 @@ def run_proteome_annotation(args):
 	print("Annotating sequences (can take a few minutes; be patient)")
 	annotator.annotate_sequences_with_all_hmms(threads=args.threads)
 	print("Filtering and merging annotations over folds")
-	annotator.curate_annotations(precomputed_hmm_cutoffs=os.path.join(args.cutoffs))
+	annotator.curate_annotations(precomputed_hmm_cutoffs=args.cutoffs)
 	annotator.annotations_filtered.to_csv(args.output_file, index=False)
