@@ -45,11 +45,12 @@ def handle_args(args):
     subparsers = ap.add_subparsers(dest="command", required=True)
 
     annotate_proteome_ap = subparsers.add_parser("annotate_proteome", help="Annotate proteome with CAZy domains.")
-    annotate_proteome_ap.add_argument("cutoffs", type=str, help = "path to file containing HMM-specific p-value cutoffs")    
+    annotate_proteome_ap.add_argument("--cutoffs", type=str, help = "path to file containing HMM-specific p-value cutoffs")    
     annotate_proteome_ap.add_argument("hmmdb", type=str, help = "path to folder containing HMMs")
     annotate_proteome_ap.add_argument("proteins", type=str, help = "path to protein sequences in fasta format")    
     annotate_proteome_ap.add_argument("--output_file", "-o", type=str, default="cazy_annotations.csv")
     annotate_proteome_ap.add_argument("--threads", "-t", type=int, default=1)
+    
 
     annotate_proteome_ap.set_defaults(func=run_proteome_annotation)
 

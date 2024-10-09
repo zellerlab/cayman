@@ -102,7 +102,7 @@ def run_proteome_annotation(args):
 
 	annotator = CazyAnnotator()
 	print("Reading HMMs")
-	annotator.read_hmms(os.path.join(args.hmmdb))
+	annotator.read_hmms(os.path.join(args.hmmdb, "hmms"))
 	print("Reading sequences")
 	annotator.read_sequences(path_to_sequences=args.proteins)
 	print("Annotating sequences (can take a few minutes; be patient)")
