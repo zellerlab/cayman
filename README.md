@@ -131,9 +131,10 @@ The following lines contain the counts for each CAZy family present in the sampl
 
 ```
 cayman annotate_proteome \
-  </path/to/input/proteins> \
   </path/to/cayman/hmm_database> \
+  </path/to/input/proteins> \
   [ -o/--output_file </path/to/output_file>, default: cayman_annotation.csv ] \
-  [ -t/--threads <int> ]
+  [ -t/--threads <int> ] \
+  [ --cutoffs <path/to/cutoff_values>, default: </path/to/cayman/hmm_database/cutoffs.csv>]
 ```
 
