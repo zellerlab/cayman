@@ -163,7 +163,7 @@ class CazyAnnotator:
         print("Merging annotations...")
         self.annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(CazyAnnotator.merge_annots)))
 
-        tmp2 = self.annotations_filtered.groupby(["sequenceID"])
+        tmp2 = self.annotations_filtered.groupby("sequenceID")
         aSeries = []
         names = []
         for name, group in tmp2:
