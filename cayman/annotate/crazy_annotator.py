@@ -105,7 +105,7 @@ class CazyAnnotator:
         import pandas as pd
         median_cutoffs = pd.read_csv(precomputed_hmm_cutoffs)
         median_cutoffs['familyType'] = [sub("\d", "", x.replace("_", "")) for x in median_cutoffs['family']]
-        median_cutoffs = median_cutoffs.groupby('familyType').median()['cutoff']
+        median_cutoffs = median_cutoffs.groupby('familyType').median(numeric_only=True)['cutoff']
         cutoffs_all = pd.read_csv(precomputed_hmm_cutoffs)
         family_fold_results_filtered = []
         for index, family_fold_results in enumerate(self.annotations_by_family_and_fold):
@@ -163,7 +163,7 @@ class CazyAnnotator:
         print("Merging annotations...")
         self.annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(CazyAnnotator.merge_annots)))
 
-        tmp2 = self.annotations_filtered.groupby(["sequenceID"])
+        tmp2 = self.annotations_filtered.groupby("sequenceID")
         aSeries = []
         names = []
         for name, group in tmp2:
