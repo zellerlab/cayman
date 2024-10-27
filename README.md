@@ -129,6 +129,8 @@ The following lines contain the counts for each CAZy family present in the sampl
 
 ## Annotating protein sets with Cayman hmms
 
+The default `hmm_database` can be obtained from [Zenodo](https://zenodo.org/records/13998227)
+
 ```
 cayman annotate_proteome \
   </path/to/cayman/hmm_database> \
