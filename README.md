@@ -19,6 +19,7 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
   - pysam
   - intervaltree
   - gqlib>=2.14.3 (which should take care of all python library requirements)
+  - pyhmmer (for protein set annotation)
 
   You will need a `bwa` installation. One way -- if you didn't install `cayman` via bioconda or if you're not using a container -- would be to use `conda env create -f environment.yml` using the provided [environment.yml](environment.yml).
 
@@ -54,8 +55,10 @@ Cayman can most easily be installed via
 
 Cayman can be run from the command line as follows:
 
+<font color="#ff0000"><b>Attention: As of version 0.10.0, cayman profiling is invoked with `cayman profile` instead of `cayman`.</b></font>
+
 ```
-cayman \
+cayman profile \
   <input_options> \
   </path/to/db> \
   </path/to/bwa_index> \
@@ -122,3 +125,18 @@ The following lines contain the counts for each CAZy family present in the sampl
 - `<out_prefix>.gene_counts.txt` contains the gene profiles of the sample. The format is identical to the CAZy profiles, featuring are the detected genes from the respective gene catalogue.
 
 - `<out_prefix>.aln_stats.txt` contains statistics on the alignments in the sample.
+
+
+## Annotating protein sets with Cayman hmms
+
+The default `hmm_database` can be obtained from [Zenodo](https://zenodo.org/records/13998227)
+
+```
+cayman annotate_proteome \
+  </path/to/cayman/hmm_database> \
+  </path/to/input/proteins> \
+  [ -o/--output_file </path/to/output_file>, default: cayman_annotation.csv ] \
+  [ -t/--threads <int> ] \
+  [ --cutoffs <path/to/cutoff_values>, default: </path/to/cayman/hmm_database/cutoffs.csv>]
+```
+

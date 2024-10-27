@@ -7,6 +7,7 @@ import textwrap
 
 from . import __version__
 from . import __toolname__
+from .functions import run_profile, run_proteome_annotation
 
 
 def handle_args(args):
@@ -34,8 +35,29 @@ def handle_args(args):
         formatter_class=argparse.RawTextHelpFormatter,
         parents=(log_ap,),
     )
-    
+
     ap.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
+	
+    ap.add_argument("--debug", action="store_true")
+
+    subparsers = ap.add_subparsers(dest="command", required=True)
+
+    annotate_proteome_ap = subparsers.add_parser("annotate_proteome", help="Annotate proteome with CAZy domains.")
+    annotate_proteome_ap.add_argument("hmmdb", type=str, help = "path to folder containing HMMs")
+    annotate_proteome_ap.add_argument("proteins", type=str, help = "path to protein sequences in fasta format")    
+    annotate_proteome_ap.add_argument("--cutoffs", type=str, help = "path to file containing HMM-specific p-value cutoffs")    
+
+    annotate_proteome_ap.add_argument("--output_file", "-o", type=str, default="cazy_annotations.csv")
+    annotate_proteome_ap.add_argument("--threads", "-t", type=int, default=1)
+    
+
+    annotate_proteome_ap.set_defaults(func=run_proteome_annotation)
+
+    profile_ap = subparsers.add_parser("profile", help="Profile WGS reads.")
+    
+    profile_ap.add_argument(
         "annotation_db",
         type=str,
         help=textwrap.dedent(
@@ -45,7 +67,7 @@ def handle_args(args):
         ),
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "bwa_index",
         type=str,
         help=textwrap.dedent(
@@ -55,7 +77,7 @@ def handle_args(args):
         ),
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "--db_format",
         type=str,
         default="hmmer",
@@ -79,7 +101,7 @@ def handle_args(args):
     # )
 
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "-1",
         dest="reads1",
         nargs="*",
@@ -87,29 +109,29 @@ def handle_args(args):
         help="A forward/R1 read fastq file. Multiple files can be separated by spaces."
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "-2",
         dest="reads2",
         nargs="*",
         type=str,
-        help="A comma-delimited string of reverse/R2 read fastq files. Multiple files can be separated by spaces."
+        help="A reverse/R2 read fastq file. Multiple files can be separated by spaces."
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "--singles", "-s",
         nargs="*",
         type=str,
-        help="A comma-delimited string of single-end read fastq files. Multiple files can be separated by spaces." 
+        help="A single-end library read fastq file. Multiple files can be separated by spaces." 
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "--orphans",
         nargs="*",
         type=str,
-        help="A comma-delimited string of orphan read fastq files. Multiple files can be separated by spaces."
+        help="An orphan read fastq file. Multiple files can be separated by spaces."
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "--out_prefix",
         "-o",
         type=str,
@@ -117,7 +139,7 @@ def handle_args(args):
         help="Prefix for output files.",
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "--min_identity",
         type=float,
         default=0.97,
@@ -125,22 +147,24 @@ def handle_args(args):
              "for an alignment to be considered.",
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "--min_seqlen",
         type=int,
         default=45,
         help="Minimum read length [bp] for an alignment to be considered.",
     )
 
-    ap.add_argument(
+    profile_ap.add_argument(
         "--cpus_for_alignment", "-t",
         type=int, default=1,
         help="",
     )
 
-    ap.add_argument(
-        "--version", "-v", action="version", version="%(prog)s " + __version__
-    )
-    ap.add_argument("--debug", action="store_true")
+    profile_ap.set_defaults(func=run_profile)
+
+    # ap.add_argument(
+    #     "--version", "-v", action="version", version="%(prog)s " + __version__
+    # )
+    # ap.add_argument("--debug", action="store_true")
 
     return ap.parse_args(args)
