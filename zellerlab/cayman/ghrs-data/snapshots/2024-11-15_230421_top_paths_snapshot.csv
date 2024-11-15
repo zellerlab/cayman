@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/zellerlab/cayman,15,8
+/zellerlab/cayman/issues,4,3
+/zellerlab/cayman/tree/main/cayman,3,2
+/zellerlab/cayman/tree/main/.github/workflows,3,1
+/zellerlab/cayman/blob/main/cayman/handle_args.py,2,1
+/zellerlab/cayman/blob/main/cayman/annotate/crazy_annotator.py,1,1
+/zellerlab/cayman/blob/main/DESCRIPTION.md,1,1
+/zellerlab/cayman/blob/main/environment.yml,1,1
+/zellerlab/cayman/blob/main/README.md,1,1
+/zellerlab/cayman/blob/main/Singularity.latest,1,1
