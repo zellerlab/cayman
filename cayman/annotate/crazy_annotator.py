@@ -179,6 +179,9 @@ class CazyAnnotator:
         self.annotations_filtered['annotLength'] = self.annotations_filtered['end'] - self.annotations_filtered['start']
         self.annotations_filtered = self.annotations_filtered[[True if x >= 10 else False for x in list(self.annotations_filtered['annotLength'])]]
 
+        self.annotations_filtered['start_protein'] = self.annotations_filtered['start']
+        self.annotations_filtered['end_protein'] = self.annotations_filtered['end']
+
         ## TRANSFORM INTO NUCLEOTIDE COORDINATES!
         self.annotations_filtered['start'] = [(x * 3) - 2 for x in self.annotations_filtered['start']]
         self.annotations_filtered['end'] = [x * 3 for x in self.annotations_filtered['end']]
