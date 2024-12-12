@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/zellerlab/cayman,37,18
+/zellerlab/cayman/tree/main,16,7
+/zellerlab/cayman/tree/main/cayman,10,5
+/zellerlab/cayman/issues,9,4
+/zellerlab/cayman/issues/8,7,4
+/zellerlab/cayman/blob/main/environment.yml,5,2
+/zellerlab/cayman/releases/tag/v0.9.7,3,3
+/zellerlab/cayman/tree/main/cayman/annotate,3,3
+/zellerlab/cayman/blob/main/cayman/annotate/crazy_annotator.py,1,1
+/zellerlab/cayman/blob/main/cayman/bin/__init__.py,1,1
