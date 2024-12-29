@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/zellerlab/cayman,35,15
+/zellerlab/cayman/issues,11,6
+/zellerlab/cayman/issues/12,11,5
+/zellerlab/cayman/tree/main/cayman,5,3
+/zellerlab/cayman/issues/8,4,3
+/zellerlab/cayman/blob/main/cayman/__main__.py,3,2
+/zellerlab/cayman/pulls,3,2
+/zellerlab/cayman/actions,3,1
+/zellerlab/cayman/pull/11,2,2
+/zellerlab/cayman/actions/workflows/pypi-publish.yml,1,1
