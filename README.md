@@ -31,8 +31,8 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 
   Prior to your first profiling run, you will have to build a bwa index from the respective GMGC reference dataset.
 
-  ```
-  bwa index -p <index_name> [-b blocksize] /path/to/dataset
+  ```console
+  $ bwa index -p <index_name> [-b blocksize] /path/to/dataset
   ```
 
   If you have enough memory available, setting `-b` to a higher value than the default (`10,000,000`), e.g. `100,000,000`, [may speed up the index generation](https://github.com/lh3/bwa/issues/104).
@@ -42,9 +42,9 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 ## Installation
 Cayman can most easily be installed via
 
-  - [bioconda]() tbd
-  - [PyPI](https://pypi.org/project/cayman/) (you still require your own `bwa` installation)
-  - [Docker](docker pull docker://ghcr.io/zellerlab/cayman:latest) (or build your own with the supplied [Dockerfile](Dockerfile))
+  - [Bioconda](https://anaconda.org/bioconda/cayman): `conda install -c bioconda cayman`
+  - [PyPI](https://pypi.org/project/cayman/): `pip install cayman` (note that you still require your own `bwa` installation)
+  - [Docker](https://github.com/zellerlab/cayman/pkgs/container/cayman): `docker pull docker://ghcr.io/zellerlab/cayman:latest` (or build your own with the supplied [Dockerfile](Dockerfile))
   - HPC container aficionado? -- here's a [Singularity recipe](Singularity.latest) (but you can also just use `docker://ghcr.io/zellerlab/cayman:latest`)
   - Dev? `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
 
@@ -55,7 +55,7 @@ Cayman can most easily be installed via
 
 Cayman can be run from the command line as follows:
 
-<font color="#ff0000"><b>Attention: As of version 0.10.0, cayman profiling is invoked with `cayman profile` instead of `cayman`.</b></font>
+**Attention: As of version 0.10.0, cayman profiling is invoked with `cayman profile` instead of `cayman`.**
 
 ```
 cayman profile \
@@ -129,7 +129,7 @@ The following lines contain the counts for each CAZy family present in the sampl
 
 ## Annotating protein sets with Cayman hmms
 
-The default `hmm_database` can be obtained from [Zenodo](https://zenodo.org/records/13998227)
+The default `hmm_database` can be obtained from [Zenodo](https://zenodo.org/records/13998227).
 
 ```
 cayman annotate_proteome \
