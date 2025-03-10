@@ -127,7 +127,7 @@ The following lines contain the counts for each CAZy family present in the sampl
 - `<out_prefix>.aln_stats.txt` contains statistics on the alignments in the sample.
 
 
-## Annotating protein sets with Cayman hmms
+## Annotating protein sets with Cayman hmms
 
 The default `hmm_database` can be obtained from [Zenodo](https://zenodo.org/records/13998227).
 
