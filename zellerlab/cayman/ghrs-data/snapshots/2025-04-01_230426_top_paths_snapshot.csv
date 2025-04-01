@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/zellerlab/cayman,30,16
+/zellerlab/cayman/blob/main/cayman/annotate/crazy_annotator.py,7,3
+/zellerlab/cayman/tree/main/cayman,6,4
+/zellerlab/cayman/blob/795d4c94f5d1ff75b0c70c1d68a5d2d3181fba6c/cayman/annotate/crazy_annotator.py,5,3
+/zellerlab/cayman/tree/main/cayman/annotate,5,3
+/zellerlab/cayman/releases/tag/v0.10.1,4,2
+/zellerlab/cayman/blob/main/requirements.txt,4,1
+/zellerlab/cayman/blob/main/environment.yml,2,1
+/zellerlab/cayman/blob/main/.github/workflows/pypi-publish.yml,2,1
+/zellerlab/cayman/commits,2,1
