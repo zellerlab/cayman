@@ -35,7 +35,7 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
   $ bwa index -p <index_name> [-b blocksize] /path/to/dataset
   ```
 
-  If you have enough memory available, setting `-b` to a higher value than the default (`10,000,000`), e.g. `100,000,000`, [may speed up the index generation](https://github.com/lh3/bwa/issues/104).
+  If you have enough memory available, setting `-b` to a higher value than the default (`10000000`), e.g. `100000000`, [may speed up the index generation](https://github.com/lh3/bwa/issues/104).
 
 
 
