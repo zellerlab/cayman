@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/zellerlab/cayman,40,21
+/zellerlab/cayman/tree/main/cayman,7,3
+/zellerlab/cayman/issues,6,3
+/zellerlab/cayman/releases/tag/v0.10.1,6,2
+/zellerlab/cayman/commits/main,5,3
+/zellerlab/cayman/blob/main/cayman/__init__.py,5,2
+/zellerlab/cayman/blob/main/cayman/annotate/__init__.py,5,1
+/zellerlab/cayman/blob/main/cayman/__main__.py,5,1
+/zellerlab/cayman/commit/0a7229794666dbe148ac605b191805004057dd38,4,3
+/zellerlab/cayman/blob/main/Dockerfile,4,2
