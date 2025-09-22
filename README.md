@@ -109,7 +109,7 @@ cayman profile \
 
 ### Running with test data
 
-A test dataset can be downloaded from [Zenodo](). Those are 1 million paired-end reads derived from SRA record `SRR7658598`. On a system with 16GB RAM and 4 CPU cores, this dataset can be processed within 5 minutes.
+A test dataset can be downloaded from [Zenodo](https://zenodo.org/records/17178430/files/cayman_test_reads.tar.gz). Those are 1 million paired-end reads derived from SRA record `SRR7658598`. On a system with 16GB RAM and 4 CPU cores, this dataset can be processed within 5 minutes.
 
 ## Results
 - `<out_prefix>.cazy.txt` contains the CAZy profile of the sample
@@ -143,5 +143,6 @@ cayman annotate_proteome \
   [ -t/--threads <int> ] \
   [ --cutoffs <path/to/cutoff_values>, default: </path/to/cayman/hmm_database/cutoffs.csv>]
 ```
+
 
 
