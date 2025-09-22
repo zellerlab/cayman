@@ -27,7 +27,6 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
 
   Cayman uses prevalence-filtered reference data sets from the [Global Microbial Gene Catalog (GMGC)](https://gmgc.embl.de/). We annotated these datasets with our dedicated CAZyme annotation method (cf. [Ducarmon & Karcher et al.](https://www.biorxiv.org/content/10.1101/2024.01.08.574624v1)). The filtered GMGC datasets and their CAZyme annotations can be downloaded from [Zenodo](https://zenodo.org/records/10473258).
 
-  [TABLE]
 
   Prior to your first profiling run, you will have to build a bwa index from the respective GMGC reference dataset.
 
@@ -48,6 +47,7 @@ Cayman can most easily be installed via
   - HPC container aficionado? -- here's a [Singularity recipe](Singularity.latest) (but you can also just use `docker://ghcr.io/zellerlab/cayman:latest`)
   - Dev? `git clone https://github.com/zellerlab/cayman && cd cayman && pip install .` (also requires a `bwa` installation)
 
+Typical installation time is a couple minutes. This mostly depends on the availability of the bioconda repository (for conda installation), the github container registry (pulling the container), PyPI (installation via pip / dependency installation from source code), and/or github.com (installation from source code.)
 <!-- For your biome of interest, you will have to download the respective gene catalog and its CAZyme annotation file, which can be found on Zenodo under the following identifier:  -->
 
 
@@ -107,6 +107,10 @@ cayman profile \
 
 * `--db_coordinates` one of `bed` (default) or `hmmer`. This allows you to provide 1-based, closed interval coordinates (`hmmer`) or 0,1-based, half-open interval coordinates (`bed`) in your database file.
 
+### Running with test data
+
+A test dataset can be downloaded from [Zenodo](). Those are 1 million paired-end reads derived from SRA record `SRR7658598`. On a system with 16GB RAM and 4 CPU cores, this dataset can be processed within 5 minutes.
+
 ## Results
 - `<out_prefix>.cazy.txt` contains the CAZy profile of the sample
 
@@ -139,4 +143,5 @@ cayman annotate_proteome \
   [ -t/--threads <int> ] \
   [ --cutoffs <path/to/cutoff_values>, default: </path/to/cayman/hmm_database/cutoffs.csv>]
 ```
+
 
