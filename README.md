@@ -60,12 +60,13 @@ Cayman can be run from the command line as follows:
 ```
 cayman profile \
   <input_options> \
-  </path/to/db> \
+  </path/to/annotation_db> \
   </path/to/bwa_index> \
   [--out_prefix <prefix>] \
   [--min_identity <float>] \
   [--min_seqlen <int>] \
-  [--cpus_for_alignment <int>]
+  [--cpus_for_alignment <int>] \
+  [--db_format [hmmer|bed]]
 ```
 
 ### Mandatory parameters
@@ -75,11 +76,11 @@ cayman profile \
   1. Read files need to be in fastq format (best with `fastq` or `fq` file ending) and can be gzip compressed.
 
   2. The `<input_options>` parameters depend on the library layout of your samples:
-      * Paired-end data can be specified with `--reads1 </path/to/reads1> --reads2 </path/to/reads2>`. Each read will be counted as `0.5`.
+      * Paired-end data can be specified with `-1 </path/to/reads1> -2 </path/to/reads2>`. Each read will be counted as `0.5`.
       * Single-end data can be specified with `--singles </path/to/reads>`. Each read will be counted as `1`.
       * Orphaned reads, i.e. paired-end reads that have lost their mate during an upstream quality control step, can be specified with `--orphans </path/to/orphans>`. Each read will be counted as `0.5`.
  
-  3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `--reads1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq --reads2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`)!
+  3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `-1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq -2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`)!
 
 
   4. The choice of assigning an unpaired read set to be "true" single-end reads or orphan reads influences the read count distribution.
@@ -89,9 +90,9 @@ cayman profile \
       * A read from a single-end library gets assigned a count of `1`.
   
 
-* `--annotation_db` is the path to a 4-column text file containing the reference domain annotation. (using the bed4 format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
+* `</path/to/annotation_db>` is the path to a 4-column text file containing the reference domain annotation. (using the bed4 format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
 
-* `--bwa_index` refers to the path of the gene catalog bwa index.
+* `</path/to/bwa_index>` refers to the path to the gene catalog bwa index.
 
 ### Optional parameters
 
@@ -103,9 +104,7 @@ cayman profile \
 
 * `--cpus_for_alignment` the number of cpus to use for alignment (default: 1).
 
-* `--db_separator` allows you to specify your own separator/delimiter in case you want to use e.g. a csv-formatted database. The bed4 restrictions such as 0-based start and 1-based end coordinates still unless you use `--db_coordinates hmmer`.
-
-* `--db_coordinates` one of `bed` (default) or `hmmer`. This allows you to provide 1-based, closed interval coordinates (`hmmer`) or 0,1-based, half-open interval coordinates (`bed`) in your database file.
+* `--db_format` determines the format of the cazy annotation db. This can either be `hmmer` (comma-separated with 1-based coordinates) or `bed` (tab-separated with 0-based start coordinate and 1-based end coordinate).
 
 ### Running with test data
 
