@@ -60,7 +60,7 @@ def run_profile(args):
         logger.error("Cannot determine database format in %s.", args.annotation_db)
         raise ValueError(f"Cannot determine database format in {args.annotation_db}.")
     
-    logger.info("Identified database format as %s", db_format)
+    logger.info("Identified database format as `%s`.", db_format)
 
     db_importer = SmallDatabaseImporter(
         logger, args.annotation_db, single_category="cazy", db_format=db_format,
