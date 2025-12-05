@@ -4,6 +4,7 @@ name: Upload Python Package to PyPI when a Release is Created
 on:
   release:
     types: [created]
+  workflow_dispatch: # Allow for running this manually.
 
 jobs:
   pypi-publish:
