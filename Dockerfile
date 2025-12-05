@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
 LABEL maintainer="cschu1981@gmail.com"
-LABEL version="0.10.1"
+LABEL version="0.10.2"
 LABEL description="cayman - profiling carbohydrate active enzymes in metagenomic/transcriptomic wgs samples"
 
 
