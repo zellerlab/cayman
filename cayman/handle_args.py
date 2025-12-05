@@ -80,7 +80,7 @@ def handle_args(args):
     profile_ap.add_argument(
         "--db_format",
         type=str,
-        default="hmmer",
+        # default="hmmer",
         choices=("bed", "hmmer"),
         help="Format of the annotation database.",
     )

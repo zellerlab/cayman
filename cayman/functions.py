@@ -6,6 +6,7 @@ import logging
 import os
 import pathlib
 import sys
+import warnings
 
 # pylint: disable=W0611
 from gqlib.db.db_import import SmallDatabaseImporter
@@ -22,6 +23,10 @@ from .annotate.crazy_annotator import CazyAnnotator
 logger = logging.getLogger(__name__)
 
 def run_profile(args):
+
+    if args.db_format is not None:
+        logger.warning("Argument --db_format is deprecated and will be removed in a future version. Database format is now automatically detected.")
+
     input_data = check_input_reads(
         args.reads1, args.reads2,
         args.singles, args.orphans,
@@ -40,8 +45,25 @@ def run_profile(args):
             exist_ok=True, parents=True
         )
 
+    db_format = None
+    with open(args.annotation_db) as db_in:
+        for line in db_in:
+            line = line.strip()
+            if line and line[0] != "#":
+                if line.find(",") != -1:
+                    db_format = "hmmer"
+                    break
+                if line.find("\t") != -1:
+                    db_format = "bed"
+                    break
+    if db_format is None:
+        logger.error("Cannot determine database format in %s.", args.annotation_db)
+        raise ValueError(f"Cannot determine database format in {args.annotation_db}.")
+    
+    logger.info("Identified database format as `%s`.", db_format)
+
     db_importer = SmallDatabaseImporter(
-        logger, args.annotation_db, single_category="cazy", db_format=args.db_format,
+        logger, args.annotation_db, single_category="cazy", db_format=db_format,
     )
     logger.info("Finished loading database.")
 
