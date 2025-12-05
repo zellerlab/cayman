@@ -65,8 +65,7 @@ cayman profile \
   [--out_prefix <prefix>] \
   [--min_identity <float>] \
   [--min_seqlen <int>] \
-  [--cpus_for_alignment <int>] \
-  [--db_format [hmmer|bed]]
+  [--cpus_for_alignment <int>]
 ```
 
 ### Mandatory parameters
@@ -104,7 +103,7 @@ cayman profile \
 
 * `--cpus_for_alignment` the number of cpus to use for alignment (default: 1).
 
-* `--db_format` determines the format of the cazy annotation db. This can either be `hmmer` (comma-separated with 1-based coordinates) or `bed` (tab-separated with 0-based start coordinate and 1-based end coordinate).
+* `--db_format [DEPRECATED]` determines the format of the cazy annotation db. This can either be `hmmer` (comma-separated with 1-based coordinates) or `bed` (tab-separated with 0-based start coordinate and 1-based end coordinate). As of v0.10.2, this parameter is no longer necessary and is only included to maintain backwards-compatibility with existing scripts.
 
 ### Running with test data
 
