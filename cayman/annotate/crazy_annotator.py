@@ -1,13 +1,15 @@
 import os
-
+import logging
 from typing import List
 
 import pyhmmer
+
 # from tqdm import tqdm
 
 
 alphabet = pyhmmer.easel.Alphabet.amino()
 
+logger = logging.getLogger(__name__)
 
 class hmms:
     
@@ -43,7 +45,7 @@ class hmms:
                 self.read_hmm_from_file(os.path.join(hmmdb_path, f))
         elif file_with_paths is not None:
             with open(file_with_paths, 'r') as _in:
-                print(f"Reading HMMs...")  # (reading total of {len(lines)})")
+                logger.info(f"Reading HMMs...")  # (reading total of {len(lines)})")
                 
                 for f in _in:
                     self.read_hmm_from_file(f.strip())
@@ -62,9 +64,12 @@ class sequences:
         :param path: path to the sequence file
         :return: None
         """
-
-        self.sequences = pyhmmer.easel.SequenceFile(path, digital = digital, alphabet = alphabet).read_block()
-    
+        with pyhmmer.easel.SequenceFile(
+            path,
+            digital=digital,
+            alphabet=alphabet,
+        ) as f:
+            self.sequences = f.read_block()
 
 class CazyAnnotator:
 
@@ -94,9 +99,11 @@ class CazyAnnotator:
             res = [self.annotate_sequences_with_hmm(i) for i in range(len(self.hmms.hmm_objects))]
         else:
             from multiprocessing import Pool
-            import timeit
-            p = Pool(threads)
-            res = p.map(self.annotate_sequences_with_hmm, range(len(self.hmms.hmm_objects)))
+            with Pool(threads) as pool:
+                res = pool.map(
+                    self.annotate_sequences_with_hmm,
+                    range(len(self.hmms.hmm_objects)),
+                )
         self.annotations_by_family_and_fold = res
 
     def curate_annotations(self, precomputed_hmm_cutoffs):
@@ -104,14 +111,14 @@ class CazyAnnotator:
         from re import sub
         import pandas as pd
         median_cutoffs = pd.read_csv(precomputed_hmm_cutoffs)
-        median_cutoffs['familyType'] = [sub("\d", "", x.replace("_", "")) for x in median_cutoffs['family']]
+        median_cutoffs['familyType'] = [sub(r"\d", "", x.replace("_", "")) for x in median_cutoffs['family']]
         median_cutoffs = median_cutoffs.groupby('familyType').median(numeric_only=True)['cutoff']
         cutoffs_all = pd.read_csv(precomputed_hmm_cutoffs)
         family_fold_results_filtered = []
         for index, family_fold_results in enumerate(self.annotations_by_family_and_fold):
             hmm_name = self.hmms.hmm_objects[index].name
             family = hmm_name.split("__")[0]
-            familyType = sub("\d", "", family).replace('_', '')
+            familyType = sub(r"\d", "", family).replace('_', '')
             fold = hmm_name.split("fold")[1].split('.mafft')[0]
             #print(family, fold)
             cutoffs_this = cutoffs_all[cutoffs_all['family'] == family]
@@ -160,7 +167,7 @@ class CazyAnnotator:
 
         annotations_with_fold_counts_series = pd.Series(annotations_with_fold_counts_series)
         
-        print("Merging annotations...")
+        logger.info("Merging annotations...")
         self.annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(CazyAnnotator.merge_annots)))
 
         tmp2 = self.annotations_filtered.groupby("sequenceID")
@@ -170,7 +177,7 @@ class CazyAnnotator:
             names.append(name)
             aSeries.append(group)
         aSeries = pd.Series(aSeries)
-        print("Resolving overlapping annotations...")
+        logger.info("Resolving overlapping annotations...")
         self.annotations_filtered = pd.concat(list(aSeries.apply(CazyAnnotator.resolve_overlapping_annotations)))
 
         # Write start and end coordinates out as integers and not floats
