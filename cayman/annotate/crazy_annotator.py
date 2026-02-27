@@ -109,7 +109,7 @@ class CazyAnnotator:
         cutoffs_all = pd.read_csv(precomputed_hmm_cutoffs)
         family_fold_results_filtered = []
         for index, family_fold_results in enumerate(self.annotations_by_family_and_fold):
-            hmm_name = self.hmms.hmm_objects[index].name.decode("utf-8")
+            hmm_name = self.hmms.hmm_objects[index].name
             family = hmm_name.split("__")[0]
             familyType = sub("\d", "", family).replace('_', '')
             fold = hmm_name.split("fold")[1].split('.mafft')[0]
@@ -289,7 +289,7 @@ class CazyAnnotator:
             return(hitDF)
         hitDF = pd.DataFrame(res)
         hitDF.columns = ["moduleID", "start", "end", "pvalue", "i_evalue", "c_evalue"]
-        hitDF['moduleID'] = [x.decode("utf-8") for x in hitDF['moduleID']]
+        hitDF['moduleID'] = [x for x in hitDF['moduleID']]
         hitDF = hitDF.drop_duplicates()        
         return(hitDF)
 
