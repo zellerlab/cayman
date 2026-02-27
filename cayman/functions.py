@@ -5,8 +5,6 @@
 import logging
 import os
 import pathlib
-import sys
-import warnings
 
 # pylint: disable=W0611
 from gqlib.db.db_import import SmallDatabaseImporter
@@ -14,9 +12,6 @@ from gqlib.profilers import RegionQuantifier
 from gqlib.runners.alignment_runner import BwaMemRunner
 from gqlib.ui.validation import check_bwa_index, check_input_reads
 
-from gqlib import __version__ as gqlib_version
-
-from . import __version__
 from .annotate.crazy_annotator import CazyAnnotator
 
 
@@ -106,17 +101,20 @@ def run_profile(args):
                 
                 logger.error("Aligner call was:")
                 logger.error("%s", call)
-                sys.exit(1)
+                
+                return 1
 
             logger.error("Encountered problems digesting the alignment stream:")
             logger.error("%s", err)
             logger.error("Aligner call was:")
             logger.error("%s", call)
             logger.error("Shutting down.")
-            sys.exit(1)
+            
+            return 1
 
     profiler.finalise(restrict_reports=("raw", "rpkm",))
 
+    return 0
 
 
 def run_proteome_annotation(args):
@@ -134,3 +132,5 @@ def run_proteome_annotation(args):
     print("Filtering and merging annotations over folds")
     annotator.curate_annotations(precomputed_hmm_cutoffs=args.cutoffs)
     annotator.annotations_filtered.to_csv(args.output_file, index=False)
+
+    return 0

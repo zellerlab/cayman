@@ -1,14 +1,9 @@
 import logging
 import os
-import pathlib
 import sys
 from typing import Optional, List
 
 # pylint: disable=W0611
-from gqlib.db.db_import import SmallDatabaseImporter
-from gqlib.profilers import RegionQuantifier
-from gqlib.runners.alignment_runner import BwaMemRunner
-from gqlib.ui.validation import check_bwa_index, check_input_reads
 
 from gqlib import __version__ as gqlib_version
 from .handle_args import build_parser, set_log_lvl_from_args
@@ -17,7 +12,7 @@ from . import __version__
 
 logger = logging.getLogger(__name__)
 
-def main(argv: Optional[List[str]] = None, stderr=sys.stderr):
+def main(argv: Optional[List[str]] = None):
 
     set_log_lvl_from_args(argv)
 
@@ -31,7 +26,4 @@ def main(argv: Optional[List[str]] = None, stderr=sys.stderr):
         os.path.basename(sys.argv[0]), " ".join(sys.argv[1:])
     )
 
-    print(args)
-    args.func(args)
-
-    return 0
+    return args.func(args)
