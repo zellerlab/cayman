@@ -33,8 +33,8 @@ class Test_CLI(unittest.TestCase):
         cls._orig_get_hits = cayman.annotate.crazy_annotator.CazyAnnotator.get_hits
 
         cls.tempfile = tempfile.NamedTemporaryFile(suffix=".csv")
-        hmms_dir = str(
-            Path(resource_files(test_data).joinpath("hmms")).resolve()
+        hmms_path = str(
+            Path(resource_files(test_data).joinpath("hmms_bin", "cayman.v3.h3m")).resolve()
         )
         proteins_fasta = str(
             Path(resource_files(test_data).joinpath("protein.faa")).resolve()
@@ -45,7 +45,7 @@ class Test_CLI(unittest.TestCase):
 
         cls.arguments_normal = [
             "annotate_proteome",
-            hmms_dir,
+            hmms_path,
             proteins_fasta,
             "--cutoffs",
             cutoff_file,
