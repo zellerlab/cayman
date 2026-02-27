@@ -41,7 +41,7 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 		install_requires=[line.strip() for line in open("requirements.txt", "rt")],
 		entry_points={
 			"console_scripts": [
-				"cayman=cayman.__main__:main",
+				"cayman=cayman._cli:main",
 			],
 		},
 		package_data={},

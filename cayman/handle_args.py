@@ -10,15 +10,13 @@ from . import __toolname__
 from .functions import run_profile, run_proteome_annotation
 
 
-def handle_args(args):
-    """ docstring """
-
+def set_log_lvl_from_args(argv):
     log_ap = argparse.ArgumentParser(prog=__toolname__, add_help=False)
     log_ap.add_argument(
         "-l", "--log_level",
         type=int, choices=range(1, 5), default=logging.INFO
     )
-    log_args, _ = log_ap.parse_known_args(args)
+    log_args, _ = log_ap.parse_known_args(argv)
 
     try:
         logging.basicConfig(
@@ -30,10 +28,19 @@ def handle_args(args):
             f"Invalid log level: {log_args.log_level}"
         ) from invalid_loglevel_err
 
+
+def build_parser() -> argparse.ArgumentParser:
+    """ docstring """
+
     ap = argparse.ArgumentParser(
         prog=__toolname__,
         formatter_class=argparse.RawTextHelpFormatter,
-        parents=(log_ap,),
+        # parents=(log_ap,),
+    )
+
+    ap.add_argument(
+        "-l", "--log_level",
+        type=int, choices=range(1, 5), default=logging.INFO
     )
 
     ap.add_argument(
@@ -143,8 +150,7 @@ def handle_args(args):
         "--min_identity",
         type=float,
         default=0.97,
-        help="Minimum sequence identity [n_match/length] "
-             "for an alignment to be considered.",
+        help="Minimum sequence identity [n_match/length] for an alignment to be considered.",
     )
 
     profile_ap.add_argument(
@@ -167,4 +173,4 @@ def handle_args(args):
     # )
     # ap.add_argument("--debug", action="store_true")
 
-    return ap.parse_args(args)
+    return ap
