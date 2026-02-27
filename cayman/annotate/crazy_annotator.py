@@ -29,8 +29,7 @@ class hmms:
         """
 
         with pyhmmer.plan7.HMMFile(path) as f:
-            hmm = f.read()
-        self.hmm_objects.append(hmm)
+            self.hmm_objects.extend(f)
 
     def read_hmms(self, file_with_paths=None, hmmdb_path=None, **kwargs):
             
@@ -42,6 +41,7 @@ class hmms:
 
         if hmmdb_path is not None:            
             for f in os.listdir(hmmdb_path):
+                logger.debug(f'Loading HMM from {f}')
                 self.read_hmm_from_file(os.path.join(hmmdb_path, f))
         elif file_with_paths is not None:
             with open(file_with_paths, 'r') as _in:
@@ -71,6 +71,17 @@ class sequences:
         ) as f:
             self.sequences = f.read_block()
 
+# TODO drop the HMM object and isntead create an hmm_loder class which we pass
+# at initialization to the cazy annotator together with the seuqneces
+# and then the open hmm file/ iterator of hmms is passed to hmmsearch
+
+# TODO in the setup.py download the zenodo repo
+# runa static vonverter script wihcih concats and writes them to a binarz h3m file
+# and saves them someplace
+# the converted hm3 file should live in the annotated folder
+# but shouldnt be commited which means add it to the gitignore
+# This makes the cli flag hmmdb optional. only if set will the loader take what the user asks
+
 class CazyAnnotator:
 
     hmms: hmms
@@ -87,6 +98,10 @@ class CazyAnnotator:
     def read_hmms(self, path_to_hmm_file):
         self.hmms = hmms()
         self.hmms.read_hmms(hmmdb_path=path_to_hmm_file)
+
+    def load_hmm(self, path_to_hmm_file):
+        self.hmms = hmms()
+        self.hmms.read_hmm_from_file(path_to_hmm_file)
 
     def read_sequences(self, path_to_sequences):
         self.sequences = sequences()

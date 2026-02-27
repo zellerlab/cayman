@@ -5,6 +5,7 @@
 import logging
 import os
 import pathlib
+import errno
 
 # pylint: disable=W0611
 from gqlib.db.db_import import SmallDatabaseImporter
@@ -124,7 +125,13 @@ def run_proteome_annotation(args):
 
     annotator = CazyAnnotator()
     logger.info("Reading HMMs")
-    annotator.read_hmms(os.path.join(args.hmmdb, "hmms"))
+    if pathlib.Path(args.hmmdb).is_dir():
+        annotator.read_hmms(os.path.join(args.hmmdb, "hmms"))
+    elif pathlib.Path(args.hmmdb).is_file():
+        annotator.load_hmm(args.hmmdb)
+    else:
+        logger.error(f"File {str(args.hmmdb)} does not exist")
+        return  errno.ENOENT
     logger.info("Reading sequences")
     annotator.read_sequences(path_to_sequences=args.proteins)
     logger.info("Annotating sequences (can take a few minutes; be patient)")
