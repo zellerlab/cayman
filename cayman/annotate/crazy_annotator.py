@@ -98,8 +98,8 @@ class CazyAnnotator:
             # res = [self.annotate_sequences_with_hmm(i) for i in tqdm(range(len(self.hmms.hmm_objects)))]
             res = [self.annotate_sequences_with_hmm(i) for i in range(len(self.hmms.hmm_objects))]
         else:
-            from multiprocessing import Pool
-            with Pool(threads) as pool:
+            from multiprocessing.pool import ThreadPool
+            with ThreadPool(threads) as pool:
                 res = pool.map(
                     self.annotate_sequences_with_hmm,
                     range(len(self.hmms.hmm_objects)),
@@ -281,11 +281,14 @@ class CazyAnnotator:
                         'family' : families})
         return(out)
     
+    @staticmethod
+    def get_hits(hmm, sequences, background):
+        pipeline = pyhmmer.plan7.Pipeline(alphabet, background=background)
+        return pipeline.search_hmm(hmm, sequences)
+
     def annotate_sequences_with_hmm(self, hmm_index):
         import pandas as pd
-        pipeline = pyhmmer.plan7.Pipeline(alphabet, background=self.background)
-        hmm =self.hmms.hmm_objects[hmm_index]
-        hits = pipeline.search_hmm(hmm, self.sequences.sequences)
+        hits = self.get_hits(self.hmms.hmm_objects[hmm_index], self.sequences.sequences, self.background)
         res = []
         for hit in hits:
             name = hit.name
