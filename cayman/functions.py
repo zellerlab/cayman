@@ -13,7 +13,7 @@ from gqlib.profilers import RegionQuantifier
 from gqlib.runners.alignment_runner import BwaMemRunner
 from gqlib.ui.validation import check_bwa_index, check_input_reads
 
-from .annotate.crazy_annotator import CazyAnnotator
+from .annotate.crazy_annotator import CazyAnnotator, HMM_Loader, sequences
 
 
 logger = logging.getLogger(__name__)
@@ -123,19 +123,18 @@ def run_proteome_annotation(args):
     if args.cutoffs is None:
         args.cutoffs = os.path.join(args.hmmdb, "cutoffs.csv")
 
-    annotator = CazyAnnotator()
-    logger.info("Reading HMMs")
-    if pathlib.Path(args.hmmdb).is_dir():
-        annotator.read_hmms(os.path.join(args.hmmdb, "hmms"))
-    elif pathlib.Path(args.hmmdb).is_file():
-        annotator.load_hmm(args.hmmdb)
-    else:
-        logger.error(f"File {str(args.hmmdb)} does not exist")
-        return  errno.ENOENT
-    logger.info("Reading sequences")
-    annotator.read_sequences(path_to_sequences=args.proteins)
+    
+    logger.info("Reading HMMs...")
+    annotator = CazyAnnotator(
+        hmms=HMM_Loader.read_hmms(
+            hmmdb_path=pathlib.Path(args.hmmdb),
+            # file_with_paths=pathlib.Path(args.file_with_hmm_paths), # TODO
+        ).hmms
+    )
+    logger.info("Reading sequences...")
+    seqs = sequences.read_sequences_from_file(path=args.proteins)
     logger.info("Annotating sequences (can take a few minutes; be patient)")
-    annotator.annotate_sequences_with_all_hmms(threads=args.threads)
+    annotator.annotate(sequences=seqs.sequences, threads=args.threads)
     logger.info("Filtering and merging annotations over folds")
     annotator.curate_annotations(precomputed_hmm_cutoffs=args.cutoffs)
     annotator.annotations_filtered.to_csv(args.output_file, index=False)

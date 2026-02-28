@@ -10,15 +10,14 @@ import logging
 import pickle
 from pathlib import Path
 
+# TODO on older python versions, we require importlib.resrouces now
 try:
     from importlib.resources import files as resource_files
 except ImportError:
     from importlib_resources import files as resource_files  # type: ignore
 
-import pyhmmer.plan7
-
 import cayman.annotate.crazy_annotator
-from cayman._cli import main, logger
+from cayman._cli import main
 from . import test_data
 
 
@@ -30,7 +29,10 @@ class Test_CLI(unittest.TestCase):
         # logger.addHandler(logging.StreamHandler(stream=io.StringIO()))
         logging.disable()
 
-        cls._orig_get_hits = cayman.annotate.crazy_annotator.CazyAnnotator.get_hits
+        # # this is the function which we want to mock to save time on tests
+        # cls._orig_get_hits = cayman.annotate.crazy_annotator.CazyAnnotator.get_hits
+
+        cls._orig_annotate = cayman.annotate.crazy_annotator.CazyAnnotator._annotate
 
         cls.tempfile = tempfile.NamedTemporaryFile(suffix=".csv")
         hmms_path = str(
@@ -87,6 +89,8 @@ class Test_CLI(unittest.TestCase):
         testdir = Path("tests/test_data/test_hits")
         testdir.mkdir(parents=True, exist_ok=True)
         fn = Path(testdir, f"{hmm.name}.pkl")
+        # if the pyhmmer mock data doesnt exist, call the fn and generate the mock data
+        # we are saving the tophits object for each hmm for the sequences to a pickle
         if not fn.exists():
             hits = self._orig_get_hits(hmm, sequences, background)
             with open(fn, "wb") as f:
@@ -94,15 +98,44 @@ class Test_CLI(unittest.TestCase):
         with open(fn, "rb") as f:
             return pickle.load(f)
 
-        #if we have the data somewhere, load it and return it
-        # print("GEtting hits for", hmm)
+    def _annotate_mock(self, hmms, sequences, threads):
+        testdir = Path("tests/test_data/test_hits")
+        testdir.mkdir(parents=True, exist_ok=True)
+        df_fn = Path(testdir, "dataframes.pkl")
+        hmm_names_fn = Path(testdir, "hmm_names.pkl")
+        if not df_fn.exists() or not hmm_names_fn.exists():
+            df_list, names_list = self._orig_annotate(
+                hmms=hmms,
+                sequences=sequences,
+                threads=threads,
+            )
+            with open(df_fn, 'wb') as f:
+                pickle.dump(df_list, f)
+            with open(hmm_names_fn, 'wb') as f:
+                pickle.dump(names_list, f)
+        with open(df_fn, "rb") as f:
+            df_list = pickle.load(f)
+        with open(hmm_names_fn, "rb") as f:
+            names_list = pickle.load(f)
+        return df_list, names_list
 
-        # pipeline = pyhmmer.plan7.Pipeline(background.alphabet, background)
-        # return pipeline.search_hmm(hmm, sequences)
+    def test_generating_annotation_results(self):
+        # wrap the call to main in the mock.patch (monkey patch)
+        # so that when the pyhmmer pipeline is called, it instead loads the pickled data
+        # with unittest.mock.patch(
+        #     target="cayman.annotate.crazy_annotator.CazyAnnotator.get_hits",
+        #     new=self._search_hmm_mock
+        # ):
+        #     self.assertEqual(main(self.arguments_normal), 0)
 
-    def test_writing_pdbs_query_ref(self):
-        with unittest.mock.patch(target="cayman.annotate.crazy_annotator.CazyAnnotator.get_hits", new=self._search_hmm_mock):
-            self.assertEqual(main(self.arguments_normal), 0)
+        # so that when the CazyAnnotator._annotate is called,
+        # it instead loads the pickled data
+        # with unittest.mock.patch(
+        #     target="cayman.annotate.crazy_annotator.CazyAnnotator._annotate",
+        #     new=self._annotate_mock
+        # ):
+        #     self.assertEqual(main(self.arguments_normal), 0)
+        self.assertEqual(main(self.arguments_normal), 0)
 
         with open(
             self.tempfile.name, "r"

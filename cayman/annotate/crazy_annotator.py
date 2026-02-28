@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import os
 import logging
-from typing import List
+import itertools
+from typing import List, Iterable, Optional, Iterator, Tuple
+from pathlib import Path
 
+import pandas as pd
 import pyhmmer
+from pyhmmer.hmmer import hmmsearch
 
 # from tqdm import tqdm
 
@@ -11,54 +17,12 @@ alphabet = pyhmmer.easel.Alphabet.amino()
 
 logger = logging.getLogger(__name__)
 
-class hmms:
-    
-    def __init__(self):
-        self.hmm_objects: List[pyhmmer.plan7.HMMFile] = []
-        pass
-
-    def get_memory_footprint(self):
-        pass
-
-    def read_hmm_from_file(self, path):
-
-        """
-        Read HMM from file and store it in the attribute hmm_objects
-        :param path: path to the HMM file
-        :return: None
-        """
-
-        with pyhmmer.plan7.HMMFile(path) as f:
-            self.hmm_objects.extend(f)
-
-    def read_hmms(self, file_with_paths=None, hmmdb_path=None, **kwargs):
-            
-        """
-        Read HMMs from a file with paths to HMM files
-        :param file_with_paths: path to the file with paths
-        :return: None
-        """
-
-        if hmmdb_path is not None:            
-            for f in os.listdir(hmmdb_path):
-                logger.debug(f'Loading HMM from {f}')
-                self.read_hmm_from_file(os.path.join(hmmdb_path, f))
-        elif file_with_paths is not None:
-            with open(file_with_paths, 'r') as _in:
-                logger.info(f"Reading HMMs...")  # (reading total of {len(lines)})")
-                
-                for f in _in:
-                    self.read_hmm_from_file(f.strip())
-
-
 class sequences:
-    def __init__(self):
-        self.sequences: List[pyhmmer.easel.SequenceFile] = []
-        pass
+    def __init__(self, sequences: pyhmmer.easel.SequenceBlock):
+        self.sequences = sequences
 
-
-    def read_sequences_from_file(self, path, digital = True):
-
+    @ classmethod
+    def read_sequences_from_file(self, path, digital = True) -> sequences:
         """
         Read sequences from file and store them in the attribute sequences
         :param path: path to the sequence file
@@ -69,11 +33,68 @@ class sequences:
             digital=digital,
             alphabet=alphabet,
         ) as f:
-            self.sequences = f.read_block()
+            return sequences(f.read_block())
 
-# TODO drop the HMM object and isntead create an hmm_loder class which we pass
-# at initialization to the cazy annotator together with the seuqneces
-# and then the open hmm file/ iterator of hmms is passed to hmmsearch
+
+class HMM_Loader:
+    def __init__(self, hmms: Iterable[pyhmmer.plan7.HMM]):
+        self.hmms = hmms
+
+    @staticmethod
+    def _read_hmm_from_file(path: Path|str) -> Iterator[pyhmmer.plan7.HMM]:
+        """
+        Read HMM from file
+        :param path: path to the HMM file
+        :return: None
+        """
+        with pyhmmer.plan7.HMMFile(path) as hmm_file:
+            for hmm in hmm_file:
+                yield hmm
+
+    @classmethod
+    def read_hmms(
+        self,
+        file_with_paths: Optional[Path]=None,
+        hmmdb_path: Optional[Path]=None,
+    ) -> HMM_Loader:
+        """
+        Read HMMs from a either a file with paths to HMM files
+        Or from a directory containing HMM files
+        Or from a single HMM file
+        :param file_with_paths: path to the file with paths
+        :param hmmdb_path: path to directory of HMMs or single HMM file
+        :return: 'HMM_Loader'
+        """
+
+        if file_with_paths is None and hmmdb_path is not None:
+            if hmmdb_path.is_file():
+                return HMM_Loader(self._read_hmm_from_file(hmmdb_path))
+            elif hmmdb_path.is_dir():
+                return HMM_Loader(
+                    itertools.chain.from_iterable(
+                        self._read_hmm_from_file(os.path.join(hmmdb_path, f))
+                        for f in os.listdir(hmmdb_path)
+                    )
+                )
+            else:
+                ValueError(
+                    f"Encounterd path which isnt a file or a dir at {str(hmmdb_path)}"
+                )
+
+        elif hmmdb_path is None and file_with_paths is not None:
+            with open(file_with_paths, 'r') as _in:
+                return HMM_Loader(
+                    itertools.chain.from_iterable(
+                        self._read_hmm_from_file(f.strip())
+                        for f in _in
+                    )
+                )
+
+        else:
+            raise ValueError(
+                "Pass either a file with paths or a path to HMM_Loader.read_hmms()"
+            )
+
 
 # TODO in the setup.py download the zenodo repo
 # runa static vonverter script wihcih concats and writes them to a binarz h3m file
@@ -84,54 +105,89 @@ class sequences:
 
 class CazyAnnotator:
 
-    hmms: hmms
-    sequences: sequences
-
-    def __init__(self):
-        self.hmms = None
-        self.sequences = None
+    def __init__(
+        self,
+        hmms: Iterable[pyhmmer.plan7.HMM],
+    ):
+        self.hmms = hmms
         self.annotations_by_family_and_fold = []
         self.annotations_by_family_and_fold_filtered =  []
         self.annotations_filtered = None
         self.background = pyhmmer.plan7.Background(alphabet)
 
-    def read_hmms(self, path_to_hmm_file):
-        self.hmms = hmms()
-        self.hmms.read_hmms(hmmdb_path=path_to_hmm_file)
+    @staticmethod
+    def _annotate(
+        hmms: Iterable[pyhmmer.plan7.HMM],
+        sequences: pyhmmer.easel.SequenceBlock,
+        threads: int = 1,
+    ) -> Tuple[List[pd.DataFrame], List[str]]:
 
-    def load_hmm(self, path_to_hmm_file):
-        self.hmms = hmms()
-        self.hmms.read_hmm_from_file(path_to_hmm_file)
-
-    def read_sequences(self, path_to_sequences):
-        self.sequences = sequences()
-        self.sequences.read_sequences_from_file(path_to_sequences)
-
-    def annotate_sequences_with_all_hmms(self, threads = 1):
-        import pandas as pd
-        if threads == 1 or threads == None:
-            # res = [self.annotate_sequences_with_hmm(i) for i in tqdm(range(len(self.hmms.hmm_objects)))]
-            res = [self.annotate_sequences_with_hmm(i) for i in range(len(self.hmms.hmm_objects))]
-        else:
-            from multiprocessing.pool import ThreadPool
-            with ThreadPool(threads) as pool:
-                res = pool.map(
-                    self.annotate_sequences_with_hmm,
-                    range(len(self.hmms.hmm_objects)),
+        hmm_hits = hmmsearch(hmms, sequences)
+        dfs = []
+        hmm_names = []
+        for hits in hmm_hits:
+            hmm_names.append(hits.query.name)
+            res: List[Tuple[str, int, int, int|float]] = []
+            for hit in hits.reported:
+                name = hit.name
+                for domain in hit.domains.reported:
+                    res.append(
+                        (
+                            name,
+                            domain.env_from,
+                            domain.env_to,
+                            domain.pvalue,
+                            # domain.i_evalue, # Do not collect unless you set Z
+                            # domain.c_evalue, # Do not collect unless you set DomZ
+                        )
+                    )
+            if len(res)==0:
+                df = pd.DataFrame(
+                    data=None,
+                    columns=["moduleID", "start", "end", "pvalue"],  # ty:ignore[invalid-argument-type]
                 )
-        self.annotations_by_family_and_fold = res
+            # TODO why are we calling drop_duplicates? how couuld that happen unless
+            # we have duplicate sequences
+            df = pd.DataFrame(
+                res,
+                columns=["moduleID", "start", "end", "pvalue"],  # ty:ignore[invalid-argument-type]
+            ).drop_duplicates()
+
+            dfs.append(df)
+
+        # TODO currently i return a list of dfs and a list of hmm names
+        # better to have it return one big df with an extra column for hmm names
+        # hmm names are only needed to match to the thresholds
+        # so once we integrate the thresholds, we dont need the names anymore
+
+        # TODO Also this returned df should then be its own class on which the fns:
+        # curate_annotations, resolve_overlapping_annotations and merge_annots operate
+
+        return dfs, hmm_names
+
+    def annotate(
+            self,
+            sequences: pyhmmer.easel.SequenceBlock,
+            threads: int = 1,
+        ):
+        self.annotations_by_family_and_fold = self._annotate(
+            hmms=self.hmms,
+            sequences=sequences,
+            threads=threads,
+        )
 
     def curate_annotations(self, precomputed_hmm_cutoffs):
         # TODO: Clean this code up..
         from re import sub
-        import pandas as pd
+        
         median_cutoffs = pd.read_csv(precomputed_hmm_cutoffs)
         median_cutoffs['familyType'] = [sub(r"\d", "", x.replace("_", "")) for x in median_cutoffs['family']]
         median_cutoffs = median_cutoffs.groupby('familyType').median(numeric_only=True)['cutoff']
         cutoffs_all = pd.read_csv(precomputed_hmm_cutoffs)
         family_fold_results_filtered = []
-        for index, family_fold_results in enumerate(self.annotations_by_family_and_fold):
-            hmm_name = self.hmms.hmm_objects[index].name
+        for index, (family_fold_results, hmm_name) in enumerate(
+            zip(*self.annotations_by_family_and_fold, strict=True)
+        ):
             family = hmm_name.split("__")[0]
             familyType = sub(r"\d", "", family).replace('_', '')
             fold = hmm_name.split("fold")[1].split('.mafft')[0]
@@ -212,8 +268,7 @@ class CazyAnnotator:
 
     @staticmethod
     def resolve_overlapping_annotations(df):
-        from collections import defaultdict
-        import pandas as pd        
+        from collections import defaultdict  
         if df.shape[0] == 1:
             return(df)
 
@@ -295,28 +350,6 @@ class CazyAnnotator:
                         'pvalue' : pvals_fin,
                         'family' : families})
         return(out)
-    
-    @staticmethod
-    def get_hits(hmm, sequences, background):
-        pipeline = pyhmmer.plan7.Pipeline(alphabet, background=background)
-        return pipeline.search_hmm(hmm, sequences)
-
-    def annotate_sequences_with_hmm(self, hmm_index):
-        import pandas as pd
-        hits = self.get_hits(self.hmms.hmm_objects[hmm_index], self.sequences.sequences, self.background)
-        res = []
-        for hit in hits:
-            name = hit.name
-            for domain in hit.domains:
-                res.append([name, domain.env_from, domain.env_to, domain.pvalue, domain.i_evalue, domain.c_evalue])
-        if len(res)==0:
-            hitDF = pd.DataFrame(columns=["moduleID", "start", "end", "pvalue", "i_evalue", "c_evalue"])
-            return(hitDF)
-        hitDF = pd.DataFrame(res)
-        hitDF.columns = ["moduleID", "start", "end", "pvalue", "i_evalue", "c_evalue"]
-        hitDF['moduleID'] = [x for x in hitDF['moduleID']]
-        hitDF = hitDF.drop_duplicates()        
-        return(hitDF)
 
     @staticmethod
     def merge_annots(df):
@@ -324,7 +357,6 @@ class CazyAnnotator:
         #from scipy.stats.mstats import gmean as gmean_old # This import triggers the subnormals warning - let's not get into the details 
         from statistics import geometric_mean
         import numpy as np
-        import pandas as pd
     
         # Emulate scipy.stats.mstats.gmean
         def gmean(iterable):
