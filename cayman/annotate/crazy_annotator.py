@@ -36,9 +36,12 @@ class Sequences:
             return Sequences(f.read_block())
 
 
-class HMM_Loader:
+class HMM_Loader(Iterable[pyhmmer.plan7.HMM]):
     def __init__(self, hmms: Iterable[pyhmmer.plan7.HMM]):
         self.hmms = hmms
+
+    def __iter__(self) -> Iterator[pyhmmer.plan7.HMM]:
+        return iter(self.hmms)
 
     @staticmethod
     def _read_hmm_from_file(path: Path|str) -> Iterator[pyhmmer.plan7.HMM]:

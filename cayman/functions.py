@@ -123,13 +123,12 @@ def run_proteome_annotation(args):
     if args.cutoffs is None:
         args.cutoffs = os.path.join(args.hmmdb, "cutoffs.csv")
 
-    
     logger.info("Reading HMMs...")
     annotator = CazyAnnotator(
         hmms=HMM_Loader.read_hmms(
             hmmdb_path=pathlib.Path(args.hmmdb),
             # file_with_paths=pathlib.Path(args.file_with_hmm_paths), # TODO
-        ).hmms
+        )
     )
     logger.info("Reading sequences...")
     seqs = Sequences.read_sequences_from_file(path=args.proteins)
