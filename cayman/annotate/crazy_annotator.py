@@ -17,12 +17,12 @@ alphabet = pyhmmer.easel.Alphabet.amino()
 
 logger = logging.getLogger(__name__)
 
-class sequences:
+class Sequences:
     def __init__(self, sequences: pyhmmer.easel.SequenceBlock):
         self.sequences = sequences
 
     @ classmethod
-    def read_sequences_from_file(self, path, digital = True) -> sequences:
+    def read_sequences_from_file(self, path, digital = True) -> Sequences:
         """
         Read sequences from file and store them in the attribute sequences
         :param path: path to the sequence file
@@ -33,7 +33,7 @@ class sequences:
             digital=digital,
             alphabet=alphabet,
         ) as f:
-            return sequences(f.read_block())
+            return Sequences(f.read_block())
 
 
 class HMM_Loader:

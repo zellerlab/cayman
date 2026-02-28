@@ -13,7 +13,7 @@ from gqlib.profilers import RegionQuantifier
 from gqlib.runners.alignment_runner import BwaMemRunner
 from gqlib.ui.validation import check_bwa_index, check_input_reads
 
-from .annotate.crazy_annotator import CazyAnnotator, HMM_Loader, sequences
+from .annotate.crazy_annotator import CazyAnnotator, HMM_Loader, Sequences
 
 
 logger = logging.getLogger(__name__)
@@ -132,7 +132,7 @@ def run_proteome_annotation(args):
         ).hmms
     )
     logger.info("Reading sequences...")
-    seqs = sequences.read_sequences_from_file(path=args.proteins)
+    seqs = Sequences.read_sequences_from_file(path=args.proteins)
     logger.info("Annotating sequences (can take a few minutes; be patient)")
     annotator.annotate(sequences=seqs.sequences, threads=args.threads)
     logger.info("Filtering and merging annotations over folds")
