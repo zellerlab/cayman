@@ -3,4 +3,5 @@ pandas==1.5.3
 pysam
 gqlib>=2.14.3
 pyhmmer>=0.12
+pyarrow>=23.0
 polars>=1.38

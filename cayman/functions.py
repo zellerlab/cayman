@@ -13,7 +13,7 @@ from gqlib.profilers import RegionQuantifier
 from gqlib.runners.alignment_runner import BwaMemRunner
 from gqlib.ui.validation import check_bwa_index, check_input_reads
 
-from .annotate.crazy_annotator import CazyAnnotator, HMM_Loader, Sequences, ThresholdTable
+from .annotate.crazy_annotator import CazyAnnotator, HMMLoader, Sequences, ThresholdTable
 
 
 logger = logging.getLogger(__name__)
@@ -125,7 +125,7 @@ def run_proteome_annotation(args):
 
     logger.info("Reading HMMs...")
     annotator = CazyAnnotator(
-        hmms=HMM_Loader.read_hmms(
+        hmms=HMMLoader.read_hmms(
             hmmdb_path=pathlib.Path(args.hmmdb),
             # file_with_paths=pathlib.Path(args.file_with_hmm_paths), # TODO
         )
@@ -143,10 +143,10 @@ def run_proteome_annotation(args):
         blacklist=tresholds.hmms_which_will_be_skipped,
     )
     logger.info("Filtering and merging annotations over folds")
-    annotator.curate_annotations(
+    annotations_filtered = annotator.curate_annotations(
         thresholds=tresholds,
         cazy_results=results,
     )
-    annotator.annotations_filtered.to_csv(args.output_file, index=False)
+    annotations_filtered.to_csv(args.output_file, index=False)
 
     return 0

@@ -5,10 +5,12 @@ import os
 import logging
 import itertools
 import collections
-from typing import IO, List, Iterable, Optional, Iterator, Tuple, Literal
+from typing import IO, List, Iterable, Optional, Iterator, Literal
 from pathlib import Path
+from statistics import geometric_mean
 
 import pandas as pd
+import numpy as np
 import polars
 import pyhmmer
 from pyhmmer.hmmer import hmmsearch
@@ -51,7 +53,7 @@ class Sequences:
             return Sequences(f.read_block())
 
 
-class HMM_Loader(Iterable[pyhmmer.plan7.HMM]):
+class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
     def __init__(self, hmms: Iterable[pyhmmer.plan7.HMM]):
         self.hmms = hmms
 
@@ -74,34 +76,34 @@ class HMM_Loader(Iterable[pyhmmer.plan7.HMM]):
         self,
         file_with_paths: Optional[Path]=None,
         hmmdb_path: Optional[Path]=None,
-    ) -> HMM_Loader:
+    ) -> HMMLoader:
         """
         Read HMMs from a either a file with paths to HMM files
         Or from a directory containing HMM files
         Or from a single HMM file
         :param file_with_paths: path to the file with paths
         :param hmmdb_path: path to directory of HMMs or single HMM file
-        :return: 'HMM_Loader'
+        :return: 'HMMLoader'
         """
 
         if file_with_paths is None and hmmdb_path is not None:
             if hmmdb_path.is_file():
-                return HMM_Loader(self._read_hmm_from_file(hmmdb_path))
+                return HMMLoader(self._read_hmm_from_file(hmmdb_path))
             elif hmmdb_path.is_dir():
-                return HMM_Loader(
+                return HMMLoader(
                     itertools.chain.from_iterable(
                         self._read_hmm_from_file(os.path.join(hmmdb_path, f))
                         for f in os.listdir(hmmdb_path)
                     )
                 )
             else:
-                ValueError(
+                raise ValueError(
                     f"Encounterd path which isnt a file or a dir at {str(hmmdb_path)}"
                 )
 
         elif hmmdb_path is None and file_with_paths is not None:
             with open(file_with_paths, 'r') as _in:
-                return HMM_Loader(
+                return HMMLoader(
                     itertools.chain.from_iterable(
                         self._read_hmm_from_file(f.strip())
                         for f in _in
@@ -110,8 +112,16 @@ class HMM_Loader(Iterable[pyhmmer.plan7.HMM]):
 
         else:
             raise ValueError(
-                "Pass either a file with paths or a path to HMM_Loader.read_hmms()"
+                "Pass either a file with paths or a path to HMMLoader.read_hmms()"
             )
+
+    def write_to_h3m_file(self, output: Path):
+        """Write the hmms to a single h3m binary file"""
+        output = Path(output).with_suffix(".h3m")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with open(output, "wb") as f:
+            for hmm in self.hmms:
+                hmm.write(f, binary=True)
 
 
 # TODO in the setup.py download the zenodo repo
@@ -137,9 +147,9 @@ class CazyAnnotator:
         hmms: Iterable[pyhmmer.plan7.HMM],
     ):
         self.hmms = hmms
-        self.annotations_by_family_and_fold = []
-        self.annotations_by_family_and_fold_filtered =  []
-        self.annotations_filtered = None
+        # self.annotations_by_family_and_fold = []
+        # self.annotations_by_family_and_fold_filtered =  []
+        # self.annotations_filtered = None
         self.background = pyhmmer.plan7.Background(alphabet)
 
     @staticmethod
@@ -196,7 +206,7 @@ class CazyAnnotator:
         self,
         thresholds: ThresholdTable,
         cazy_results: CazyResultsTable,
-    ):
+    ) -> pd.DataFrame:
         # # TODO: Clean this code up..
         # from re import sub
         
@@ -252,7 +262,7 @@ class CazyAnnotator:
         ## TODO did conversion until here....
         annotations_with_fold_counts = cazy_results.apply_thresholds(
             thresholds=thresholds,
-        ).to_pandas()
+        ).to_pandas() # TODO only this line causes the pyarrow dependency
 
         annotations_with_fold_counts = annotations_with_fold_counts.groupby(['sequenceID', "family"])
         annotations_with_fold_counts_series = []
@@ -264,9 +274,9 @@ class CazyAnnotator:
         annotations_with_fold_counts_series = pd.Series(annotations_with_fold_counts_series)
         
         logger.info("Merging annotations...")
-        self.annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(CazyAnnotator.merge_annots)))
+        annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(CazyAnnotator.merge_annots)))
 
-        tmp2 = self.annotations_filtered.groupby("sequenceID")
+        tmp2 = annotations_filtered.groupby("sequenceID")
         aSeries = []
         names = []
         for name, group in tmp2:
@@ -274,26 +284,45 @@ class CazyAnnotator:
             aSeries.append(group)
         aSeries = pd.Series(aSeries)
         logger.info("Resolving overlapping annotations...")
-        self.annotations_filtered = pd.concat(list(aSeries.apply(CazyAnnotator.resolve_overlapping_annotations)))
+        annotations_filtered = pd.concat(list(aSeries.apply(CazyAnnotator.resolve_overlapping_annotations)))
 
         # Write start and end coordinates out as integers and not floats
-        self.annotations_filtered['start'] = [int(x) for x in self.annotations_filtered['start']]
-        self.annotations_filtered['end'] = [int(x) for x in self.annotations_filtered['end']]
-        self.annotations_filtered['annotLength'] = self.annotations_filtered['end'] - self.annotations_filtered['start']
-        self.annotations_filtered = self.annotations_filtered[[True if x >= 10 else False for x in list(self.annotations_filtered['annotLength'])]]
+        annotations_filtered['start'] = [int(x) for x in annotations_filtered['start']]
+        annotations_filtered['end'] = [int(x) for x in annotations_filtered['end']]
+        annotations_filtered['annotLength'] = annotations_filtered['end'] - annotations_filtered['start']
+        annotations_filtered = annotations_filtered[[True if x >= 10 else False for x in list(annotations_filtered['annotLength'])]]
 
-        self.annotations_filtered['start_protein'] = self.annotations_filtered['start']
-        self.annotations_filtered['end_protein'] = self.annotations_filtered['end']
+        annotations_filtered['start_protein'] = annotations_filtered['start']
+        annotations_filtered['end_protein'] = annotations_filtered['end']
 
         ## TRANSFORM INTO NUCLEOTIDE COORDINATES!
-        self.annotations_filtered['start'] = [(x * 3) - 2 for x in self.annotations_filtered['start']]
-        self.annotations_filtered['end'] = [x * 3 for x in self.annotations_filtered['end']]
-        self.annotations_filtered['annotLength'] = [x * 3 for x in self.annotations_filtered['annotLength']]
-        #self.annotations_filtered.to_csv(base_dir + "/" + gc_name + "_all_v3_FINAL.csv", index = False)        
+        annotations_filtered['start'] = [(x * 3) - 2 for x in annotations_filtered['start']]
+        annotations_filtered['end'] = [x * 3 for x in annotations_filtered['end']]
+        annotations_filtered['annotLength'] = [x * 3 for x in annotations_filtered['annotLength']]
+        #annotations_filtered.to_csv(base_dir + "/" + gc_name + "_all_v3_FINAL.csv", index = False)      
+        
+        return annotations_filtered
 
     @staticmethod
     def resolve_overlapping_annotations(df):
-        from collections import defaultdict  
+
+        # NOTE
+        # Conceptually this fn resolves cases where multiple regions
+        # (from the merging done in merge_annots) overlapp.
+        # These regions will stem from different CAZy families
+        # Instead of reporting them all, we select the best region per residue
+        # by taking the hmm with the lowest p-value
+        # this means that for this example:
+        # Annotation A: 100-200, p=1e-50 (has lower p-value)
+        # Annotation B: 150-250, p=1e-10
+        # you would get:
+        # 100-200 -> A (since better p-value it is reported in full)
+        # 200-250 -> B (this one is truncated silently!)
+        # I think the fact that it is reporting truncated regions
+        # for the overlapping partner with the higher p-value is a conceptual issue.
+        # I think the clean way (and more performant way) to do it would be
+        # to discard the overlap with the higher p-value entirely
+
         if df.shape[0] == 1:
             return(df)
 
@@ -307,11 +336,11 @@ class CazyAnnotator:
         df['start'] = [int(x) for x in df['start']]
         df['end'] = [int(x) for x in df['end']]
         ranges = [list(range(x,y)) for x, y in zip(df['start'], df['end'])]
-        cc = defaultdict(int)
+        cc = collections.defaultdict(int)
         # Get geomtric mean p-value over folds within a residue
         p_vals = list(df['pvalue'])
         families = list(df['family'])
-        p_vals_dict = defaultdict(dict)
+        p_vals_dict = collections.defaultdict(dict)
         for i_r in range(len(ranges)):
             for i in ranges[i_r]:
                 ## cc is like a depth of coverage dict.
@@ -332,7 +361,7 @@ class CazyAnnotator:
             #print("I have {} p-values".format(len(p_values)))
             for range_index, p_value in p_values.items():
                 #print(range_index, p_value)
-                if smallest_p_value == None or p_value < smallest_p_value:
+                if smallest_p_value is None or p_value < smallest_p_value:
                     #print("Updating smallest_p_value")
                     smallest_p_value = p_value
                     range_i_to_take = range_index
@@ -345,7 +374,7 @@ class CazyAnnotator:
         for residue in sorted(cc):
             currentRangeIndex = final_ranges[residue]
             #print(oldRangeIndex, currentRangeIndex)
-            if oldRangeIndex == None or (oldRangeIndex) == currentRangeIndex:
+            if oldRangeIndex is None or (oldRangeIndex) == currentRangeIndex:
                 #print("Appending to current range")
                 currentRange.append([residue, currentRangeIndex])
             else:
@@ -378,11 +407,29 @@ class CazyAnnotator:
 
     @staticmethod
     def merge_annots(df):
-        from collections import defaultdict
         #from scipy.stats.mstats import gmean as gmean_old # This import triggers the subnormals warning - let's not get into the details 
-        from statistics import geometric_mean
-        import numpy as np
-    
+        
+        # NOTE
+        # So conceptually this fn is supposed to execute this paragraph from the paper:
+        # "we kept only those residues where at least
+        # half the fold-specific HMMs (rounded up) yielded a significant hit."
+
+        # But in practise it also has to aggregate the p-values from multiple hmms
+        # The latter is accomplished by:
+        # - assigning the p-value from the hmm to each residue it hit (residue level)
+        # - for residues hit by multiple hmms, take the geometric mean
+        # - now we have again 1 p-value per residue
+        # - calculate the geometric mean over p-values in the region
+        # - in summary it does geometric means twice: fold -> residue -> region
+        # This is residue level calculation is very costly
+        # and also conceptually questionable
+
+        # NOTE
+        # In the future we will probably move towards a version where
+        # instead of a majority vote we will randomly (seeded) select one HMM per fold
+        # this avoids a) the performance penalty for running all HMMs
+        # b) it avoids the difficulties of merging regions and potentially having to avg
+
         # Emulate scipy.stats.mstats.gmean
         def gmean(iterable):
             if all(x == 0 for x in iterable):
@@ -402,10 +449,10 @@ class CazyAnnotator:
             df['pvalue'] = [x if x > 0 else smallestNonZero for x in df['pvalue']]
         #numberFolds = len(list(set(list(df['fold']))))
         ranges = [list(range(x,y)) for x, y in zip(df['start'], df['end'])]
-        cc = defaultdict(int)
+        cc = collections.defaultdict(int)
         # Get geomtric mean p-value over folds within a residue
         p_vals = list(df['pvalue'])
-        p_vals_dict = defaultdict(list)
+        p_vals_dict = collections.defaultdict(list)
         for i_r in range(len(ranges)):
             for i in ranges[i_r]:
                 cc[i] += 1
@@ -419,7 +466,7 @@ class CazyAnnotator:
         for key in sorted(cc):
             value = cc[key]
             if value > foldCutoff:
-                if oldKey == None or (oldKey+1) == key :
+                if oldKey is None or (oldKey+1) == key :
                     currentRange.append(key)
                 else:
                     #print('appending range')
@@ -557,7 +604,7 @@ class CazyResultsTable:
                 on="familyType",
                 how="left",
             )
-            # NOTE this is to replicate previous behaviour
+            # NOTE
             # where the cutoff is none, replace it with the median cutoff
             # of the enitre Cazyme familyType (e.g. CBM or GH)
             .with_columns(
