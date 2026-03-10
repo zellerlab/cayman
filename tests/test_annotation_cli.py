@@ -36,13 +36,13 @@ class Test_CLI(unittest.TestCase):
 
         cls.tempfile = tempfile.NamedTemporaryFile(suffix=".csv")
         hmms_path = str(
-            Path(resource_files(test_data).joinpath("hmms_bin", "cayman.v3.h3m")).resolve()
+            Path(resource_files(test_data).joinpath("hmms_bin", "cayman.v3.h3m")).resolve()  # ty:ignore[invalid-argument-type]
         )
         proteins_fasta = str(
-            Path(resource_files(test_data).joinpath("protein.faa")).resolve()
+            Path(resource_files(test_data).joinpath("protein.faa")).resolve()  # ty:ignore[invalid-argument-type]
         )
         cutoff_file = str(
-            Path(resource_files(test_data).joinpath("cutoffs.csv")).resolve()
+            Path(resource_files(test_data).joinpath("cutoffs.csv")).resolve()  # ty:ignore[invalid-argument-type]
         )
 
         cls.arguments_normal = [
