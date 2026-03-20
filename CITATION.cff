@@ -1,0 +1,100 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Cayman
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - {}
+  - given-names: Quinten
+    orcid: 'https://orcid.org/0000-0001-7077-2127'
+    affiliation: >-
+      Leiden University Medical Center, Leiden, The
+      Netherlands
+    family-names: Ducarmon
+  - given-names: Nicolai
+    family-names: Karcher
+    affiliation: >-
+      European Molecular Biology Laboratory, Heidelberg
+      Germany
+    orcid: 'https://orcid.org/0000-0001-7894-8182'
+  - name-particle: L.P.
+    family-names: Tytgat
+    given-names: Hanne
+    affiliation: >-
+      Nestlé Institute of Health Sciences, Lausanne,
+      Switzerland
+    orcid: 'https://orcid.org/0000-0001-6270-2110'
+  - given-names: Omar
+    orcid: 'https://orcid.org/0000-0002-6637-4609'
+    family-names: 'Delannoy-Bruno '
+    affiliation: >-
+      Nestlé Institute of Health Sciences, Lausanne,
+      Switzerland
+  - given-names: Selin
+    family-names: Pekel
+    affiliation: >-
+      Leiden University Medical Center, Leiden, The
+      Netherlands
+    orcid: 'https://orcid.org/0000-0003-0277-8644'
+  - given-names: Fabian
+    family-names: Springer
+    affiliation: >-
+      European Molecular Biology Laboratory, Heidelberg,
+      Germany
+    orcid: 'https://orcid.org/0000-0002-0855-8151'
+  - given-names: Christian
+    family-names: Schudoma
+    affiliation: >-
+      European Molecular Biology Laboratory, Heidelberg, 
+      Germany
+    orcid: 'https://orcid.org/0000-0003-1157-1354'
+  - given-names: Georg
+    family-names: Zeller
+    orcid: 'https://orcid.org/0000-0003-1429-7485'
+    email: zeller@embl.de
+    affiliation: >-
+      Leiden University Medical Center, Leiden, The
+      Netherlands, European Molecular Biology Laboratory,
+      Heidelberg, Germany
+identifiers:
+  - type: doi
+    value: 10.1101/2024.01.08.574624
+    description: Cayman BioRxiv Preprint
+repository-code: 'https://github.com/zellerlab/cayman'
+url: 'https://zellerlab.org/tools/cayman'
+repository: 'https://zenodo.org/records/17178430'
+abstract: >-
+  Carbohydrate-active enzymes (CAZymes) are crucial for
+  digesting glycans, but bioinformatics tools for CAZyme
+  profiling and interpretation of substrate preferences in
+  microbial community data are lacking. To address this, we
+  developed a CAZyme profiler (Cayman) and a hierarchical
+  substrate annotation scheme. Leveraging these, we
+  genomically survey CAZymes in human gut microbes
+  (n=107,683 genomes), which suggests novel mucin-foraging
+  species. In a subsequent meta-analysis of CAZyme
+  repertoires in Western versus non-Western gut metagenomes
+  (n=4,281) we find that non-Western metagenomes are richer
+  in fibre-degrading CAZymes despite lower overall CAZyme
+  richness. We additionally pinpoint the taxonomic drivers
+  underlying these CAZyme community shifts. A second
+  meta-analysis comparing colorectal cancer patients (CRC)
+  to controls (n=1,998) shows that CRC metagenomes are
+  deprived of dietary fibre-targeting, but enriched in
+  glycosaminoglycan-targeting CAZymes. A genomic analysis of
+  co-localizing CAZyme domains predicts novel substrates for
+  CRC-enriched CAZymes. Cayman is broadly applicable across
+  microbial communities and freely available from
+  https://github.com/zellerlab/cayman.
+keywords:
+  - CAZyme
+  - Carbohydrate Metabolism
+  - Microbiome
+license: MIT
+commit: bec18dd31b4b2f3e03cf931562535124e20f533d
+version: 0.10.2
+date-released: '2025-12-05'
