@@ -5,17 +5,14 @@ import os
 import logging
 import itertools
 import collections
+import warnings
+import hashlib
 from typing import IO, List, Iterable, Optional, Iterator, Literal
 from pathlib import Path
-from statistics import geometric_mean
 
-import pandas as pd
-import numpy as np
 import polars
 import pyhmmer
 from pyhmmer.hmmer import hmmsearch
-
-# from tqdm import tqdm
 
 
 alphabet = pyhmmer.easel.Alphabet.amino()
@@ -54,11 +51,80 @@ class Sequences:
 
 
 class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
-    def __init__(self, hmms: Iterable[pyhmmer.plan7.HMM]):
-        self.hmms = hmms
+    def __init__(
+        self,
+        hmms: Iterable[pyhmmer.plan7.HMM],
+        seed: int = 42,
+        blacklist: Optional[List[str]] = None,
+    ):  
+        self.seed = seed
+        if blacklist is not None:
+            # We need to materialize hmms since we iterate twice by necessity
+            hmms = list(hmms)
+            hmms.sort(key=lambda x: x.name)
+            self.hmms = (
+                hmm
+                for hmm in hmms
+                if hmm.name in self.select_hmms(
+                    hmms=hmms,
+                    blacklist=blacklist,
+                    seed=self.seed,
+                )
+            )
+            if not self.hmms:
+                raise ValueError(
+                    "No hmms passed the selection! Are you sure the cutoff file was correct?"
+                )
+        else:
+            self.hmms = hmms
+
+        if self.seed != 42 and blacklist is None:
+            warnings.warn(
+                "You changed the seed from the default (42)"
+                "but did not pass a blacklist."
+                "This will bypass the hmm-fold selection!"
+            )
 
     def __iter__(self) -> Iterator[pyhmmer.plan7.HMM]:
         return iter(self.hmms)
+
+    @staticmethod
+    def select_hmms(hmms, blacklist: List[str], seed: int = 42) -> List[str]:
+        tbl_data = collections.defaultdict(list)
+        for hmm in hmms:
+            splits = hmm.name.split(".")[0].split("__")
+            tbl_data["hmm"].append(hmm.name)
+            tbl_data["family"].append(splits[1])
+            tbl_data["fold"].append(int(splits[2][-1]))
+
+        df = (
+            polars.from_dict(
+                data=tbl_data,
+                schema_overrides={
+                    "hmm": polars.Utf8,
+                    "family": polars.Utf8,
+                    "fold": polars.UInt8,
+                }
+            )
+            # For hmms without thresholds but with other family members with trehsolds
+            # We need to select one of the hmm with treshold
+            # In other words, select hmms not in the blacklist.
+            .filter(~polars.col("hmm").is_in(blacklist))
+        )
+        # we want to group by family and then randomly select one fold from each family
+        # to do this I assign a seeded random index to each row
+        # and then select the lowest index within each family
+        # (group_by maintains order within group)
+        return (
+            df
+            .with_columns(polars.int_range(0, polars.len()).shuffle(seed).alias("rand"))
+            .sort("rand")
+            .group_by("family")
+            .agg(
+                polars.first("fold", "hmm"),
+            )
+            ["hmm"].to_list()
+        )
 
     @staticmethod
     def _read_hmm_from_file(path: Path|str) -> Iterator[pyhmmer.plan7.HMM]:
@@ -71,11 +137,21 @@ class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
             for hmm in hmm_file:
                 yield hmm
 
+    @staticmethod
+    def md5_of_file(path: Path) -> str:
+        hasher = hashlib.md5()
+        with path.open("rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
     @classmethod
     def read_hmms(
         self,
         file_with_paths: Optional[Path]=None,
         hmmdb_path: Optional[Path]=None,
+        blacklist: Optional[List[str]] = None,
+        seed: int = 42,
     ) -> HMMLoader:
         """
         Read HMMs from a either a file with paths to HMM files
@@ -88,13 +164,19 @@ class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
 
         if file_with_paths is None and hmmdb_path is not None:
             if hmmdb_path.is_file():
-                return HMMLoader(self._read_hmm_from_file(hmmdb_path))
+                return HMMLoader(
+                    self._read_hmm_from_file(hmmdb_path),
+                    blacklist=blacklist,
+                    seed=seed,
+                )
             elif hmmdb_path.is_dir():
                 return HMMLoader(
                     itertools.chain.from_iterable(
                         self._read_hmm_from_file(os.path.join(hmmdb_path, f))
                         for f in os.listdir(hmmdb_path)
-                    )
+                    ),
+                    blacklist=blacklist,
+                    seed=seed,
                 )
             else:
                 raise ValueError(
@@ -107,7 +189,9 @@ class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
                     itertools.chain.from_iterable(
                         self._read_hmm_from_file(f.strip())
                         for f in _in
-                    )
+                    ),
+                    blacklist=blacklist,
+                    seed=seed,
                 )
 
         else:
@@ -115,9 +199,12 @@ class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
                 "Pass either a file with paths or a path to HMMLoader.read_hmms()"
             )
 
-    def write_to_h3m_file(self, output: Path):
+    def write_to_h3m_file(
+        self,
+        output: Path,
+    ):
         """Write the hmms to a single h3m binary file"""
-        output = Path(output).with_suffix(".h3m")
+        output = Path(output).with_suffix(f".seed{self.seed}_selected.h3m")
         output.parent.mkdir(parents=True, exist_ok=True)
         with open(output, "wb") as f:
             for hmm in self.hmms:
@@ -147,9 +234,6 @@ class CazyAnnotator:
         hmms: Iterable[pyhmmer.plan7.HMM],
     ):
         self.hmms = hmms
-        # self.annotations_by_family_and_fold = []
-        # self.annotations_by_family_and_fold_filtered =  []
-        # self.annotations_filtered = None
         self.background = pyhmmer.plan7.Background(alphabet)
 
     @staticmethod
@@ -181,9 +265,6 @@ class CazyAnnotator:
                         # domain.i_evalue, # Do not collect unless you set Z
                         # domain.c_evalue, # Do not collect unless you set DomZ
                     )
-        # TODO why were we calling drop_duplicates? how couuld that happen unless
-        # we have duplicate sequences
-
         # hmm names are only needed to match to the thresholds
         # so once we integrate the thresholds, we dont need the names anymore
 
@@ -206,294 +287,38 @@ class CazyAnnotator:
         self,
         thresholds: ThresholdTable,
         cazy_results: CazyResultsTable,
-    ) -> pd.DataFrame:
-        # # TODO: Clean this code up..
-        # from re import sub
-        
-        # median_cutoffs = pd.read_csv(precomputed_hmm_cutoffs)
-        # median_cutoffs['familyType'] = [sub(r"\d", "", x.replace("_", "")) for x in median_cutoffs['family']]
-        # median_cutoffs = median_cutoffs.groupby('familyType').median(numeric_only=True)['cutoff']
-        # cutoffs_all = pd.read_csv(precomputed_hmm_cutoffs)
-        # family_fold_results_filtered = []
-        # for index, (family_fold_results, hmm_name) in enumerate(
-        #     zip(*self.annotations_by_family_and_fold, strict=True)
-        # ):
-        #     family = hmm_name.split("__")[0]
-        #     familyType = sub(r"\d", "", family).replace('_', '')
-        #     fold = hmm_name.split("fold")[1].split('.mafft')[0]
-        #     #print(family, fold)
-        #     cutoffs_this = cutoffs_all[cutoffs_all['family'] == family]
-        #     cutoffs_this = cutoffs_this[cutoffs_this['fold'] == int(fold)]       
+    ) -> polars.DataFrame:
 
-        #     # Exclude empty annotations...
-        #     if family_fold_results.shape[0] == 0:
-        #         continue     
-
-        #     if cutoffs_this.shape[0] != 1:
-        #         #print("Cant find optimal cutoff for {}, presumably because CV didn't happen, presumably because small family.".format(hmm_name))
-        #         if any([True if x == family else False for x in cutoffs_all['family']]):
-        #             # If we have other folds of this family, it's okay
-        #             #print("Ignoring this fold")
-        #             continue
-        #         else:
-        #             # if not, simply take median p-value cutoff
-        #             cutoff = median_cutoffs[familyType]
-        #             #print("Taking median p-value cutoff {}".format(cutoff))
-        #     else:
-        #         cutoff = list(cutoffs_this['cutoff'])[0]
-
-        #     #print(GMGC_annots.head())
-        #     family_fold_results_filtered = family_fold_results[family_fold_results['pvalue'] < cutoff].copy(deep=True)
-        #     family_fold_results_filtered['family'] = family
-        #     family_fold_results_filtered['fold'] = fold
-        #     self.annotations_by_family_and_fold_filtered.append(family_fold_results_filtered)
-        # self.annotations_filtered = pd.concat(self.annotations_by_family_and_fold_filtered)
-        # del self.annotations_by_family_and_fold
-        # del self.annotations_by_family_and_fold_filtered
-        # #self.annotations_filtered = self.annotations_filtered.iloc[:, 1:]
-        # #GMGC_annots_all.drop('pvalue', axis = 1, inplace = True)
-
-        # self.annotations_filtered.rename(columns={'moduleID': 'sequenceID'}, inplace=True)
-
-        # fold_counts = cutoffs_all.groupby('family').count()['fold'].to_frame().rename({'fold' : 'num_folds'}, axis = 'columns')
-        # fold_counts['num_folds'] = [int(x)for x in fold_counts['num_folds']]
-        # annotations_with_fold_counts = pd.merge(self.annotations_filtered, fold_counts, on = 'family', how = 'left')
-        
-        ## TODO did conversion until here....
-        annotations_with_fold_counts = cazy_results.apply_thresholds(
-            thresholds=thresholds,
-        ).to_pandas() # TODO only this line causes the pyarrow dependency
-
-        annotations_with_fold_counts = annotations_with_fold_counts.groupby(['sequenceID', "family"])
-        annotations_with_fold_counts_series = []
-        names = []
-        for name, group in annotations_with_fold_counts:
-            names.append(name)
-            annotations_with_fold_counts_series.append(group)
-
-        annotations_with_fold_counts_series = pd.Series(annotations_with_fold_counts_series)
-        
-        logger.info("Merging annotations...")
-        annotations_filtered = pd.concat(list(annotations_with_fold_counts_series.apply(CazyAnnotator.merge_annots)))
-
-        tmp2 = annotations_filtered.groupby("sequenceID")
-        aSeries = []
-        names = []
-        for name, group in tmp2:
-            names.append(name)
-            aSeries.append(group)
-        aSeries = pd.Series(aSeries)
-        logger.info("Resolving overlapping annotations...")
-        annotations_filtered = pd.concat(list(aSeries.apply(CazyAnnotator.resolve_overlapping_annotations)))
-
-        # Write start and end coordinates out as integers and not floats
-        annotations_filtered['start'] = [int(x) for x in annotations_filtered['start']]
-        annotations_filtered['end'] = [int(x) for x in annotations_filtered['end']]
-        annotations_filtered['annotLength'] = annotations_filtered['end'] - annotations_filtered['start']
-        annotations_filtered = annotations_filtered[[True if x >= 10 else False for x in list(annotations_filtered['annotLength'])]]
-
-        annotations_filtered['start_protein'] = annotations_filtered['start']
-        annotations_filtered['end_protein'] = annotations_filtered['end']
-
-        ## TRANSFORM INTO NUCLEOTIDE COORDINATES!
-        annotations_filtered['start'] = [(x * 3) - 2 for x in annotations_filtered['start']]
-        annotations_filtered['end'] = [x * 3 for x in annotations_filtered['end']]
-        annotations_filtered['annotLength'] = [x * 3 for x in annotations_filtered['annotLength']]
-        #annotations_filtered.to_csv(base_dir + "/" + gc_name + "_all_v3_FINAL.csv", index = False)      
-        
+        annotations_filtered = (
+            cazy_results
+            .apply_thresholds(thresholds)
+            .disentangle_domains()
+            .table
+            .rename(
+                {"start": "start_protein", "end": "end_protein"}
+            )
+            # Transform to nucleotide coordinates
+            .with_columns(
+                start = polars.col("start_protein")*3 - 2,
+                end = polars.col("end_protein")*3 - 2,
+                annotLength = (polars.col("end_protein")-polars.col("start_protein"))*3
+            )
+            # bring the columns in order
+            .select(
+                [
+                    'sequenceID',
+                    'start',
+                    'end',
+                    'pvalue',
+                    'family',
+                    'annotLength',
+                    'start_protein',
+                    'end_protein'
+                ]
+            )
+            .sort(by=["sequenceID", "start_protein"])
+        )
         return annotations_filtered
-
-    @staticmethod
-    def resolve_overlapping_annotations(df):
-
-        # NOTE
-        # Conceptually this fn resolves cases where multiple regions
-        # (from the merging done in merge_annots) overlapp.
-        # These regions will stem from different CAZy families
-        # Instead of reporting them all, we select the best region per residue
-        # by taking the hmm with the lowest p-value
-        # this means that for this example:
-        # Annotation A: 100-200, p=1e-50 (has lower p-value)
-        # Annotation B: 150-250, p=1e-10
-        # you would get:
-        # 100-200 -> A (since better p-value it is reported in full)
-        # 200-250 -> B (this one is truncated silently!)
-        # I think the fact that it is reporting truncated regions
-        # for the overlapping partner with the higher p-value is a conceptual issue.
-        # I think the clean way (and more performant way) to do it would be
-        # to discard the overlap with the higher p-value entirely
-
-        if df.shape[0] == 1:
-            return(df)
-
-        if all(df['pvalue'] == 0):
-            df['pvalue'] = 1E-500
-        else:
-            smallestNonZero = min([x for x in df['pvalue'] if x > 0])
-            df['pvalue'] = [x if x > 0 else smallestNonZero for x in df['pvalue']]
-
-        #numberFolds = len(list(set(list(df['fold']))))
-        df['start'] = [int(x) for x in df['start']]
-        df['end'] = [int(x) for x in df['end']]
-        ranges = [list(range(x,y)) for x, y in zip(df['start'], df['end'])]
-        cc = collections.defaultdict(int)
-        # Get geomtric mean p-value over folds within a residue
-        p_vals = list(df['pvalue'])
-        families = list(df['family'])
-        p_vals_dict = collections.defaultdict(dict)
-        for i_r in range(len(ranges)):
-            for i in ranges[i_r]:
-                ## cc is like a depth of coverage dict.
-                cc[i] += 1
-                p_vals_dict[i][i_r] = p_vals[i_r]
-        #print(p_vals_dict)
-
-        ranges = ranges
-        final_ranges = dict()
-        # loop over residues, memorizing the 'range to take' by taking that range that correspond to the smallest p-value
-        # Save it in final_ranges
-        for residue in sorted(cc):
-            #coverage = cc[residue]
-            p_values = p_vals_dict[residue]
-            #print(p_values)
-            smallest_p_value = None
-            range_i_to_take = None
-            #print("I have {} p-values".format(len(p_values)))
-            for range_index, p_value in p_values.items():
-                #print(range_index, p_value)
-                if smallest_p_value is None or p_value < smallest_p_value:
-                    #print("Updating smallest_p_value")
-                    smallest_p_value = p_value
-                    range_i_to_take = range_index
-            final_ranges[residue] = range_i_to_take
-
-        # Loop over chosen ranges
-        oldRangeIndex = None
-        rangesOut = []
-        currentRange = []
-        for residue in sorted(cc):
-            currentRangeIndex = final_ranges[residue]
-            #print(oldRangeIndex, currentRangeIndex)
-            if oldRangeIndex is None or (oldRangeIndex) == currentRangeIndex:
-                #print("Appending to current range")
-                currentRange.append([residue, currentRangeIndex])
-            else:
-                if len(currentRange) > 1:
-                    rangesOut.append(currentRange)
-                currentRange = []
-            oldRangeIndex = currentRangeIndex
-
-        # Append final range...
-        if len(currentRange) > 1:
-            rangesOut.append(currentRange)
-
-        ranges = []
-        # There's a one-off problem with the index, fixing it here
-        for i, r in enumerate(rangesOut):
-            if i >= 1:
-                ranges.append([r[0][0] -1, r[-1][0]])
-            else:
-                ranges.append([r[0][0], r[-1][0]])
-        #ranges = [[x[0][0], x[-1][0]] for x in rangesOut]
-        pvals_fin = [p_vals[x[0][1]] for x in rangesOut]
-        families = [families[x[0][1]] for x in rangesOut]
-
-        out = pd.DataFrame({"sequenceID" : [list(df['sequenceID'])[0]] * len(ranges),
-                        "start" : [x[0] for x in ranges],
-                        "end" : [x[1] for x in ranges],
-                        'pvalue' : pvals_fin,
-                        'family' : families})
-        return(out)
-
-    @staticmethod
-    def merge_annots(df):
-        #from scipy.stats.mstats import gmean as gmean_old # This import triggers the subnormals warning - let's not get into the details 
-        
-        # NOTE
-        # So conceptually this fn is supposed to execute this paragraph from the paper:
-        # "we kept only those residues where at least
-        # half the fold-specific HMMs (rounded up) yielded a significant hit."
-
-        # But in practise it also has to aggregate the p-values from multiple hmms
-        # The latter is accomplished by:
-        # - assigning the p-value from the hmm to each residue it hit (residue level)
-        # - for residues hit by multiple hmms, take the geometric mean
-        # - now we have again 1 p-value per residue
-        # - calculate the geometric mean over p-values in the region
-        # - in summary it does geometric means twice: fold -> residue -> region
-        # This is residue level calculation is very costly
-        # and also conceptually questionable
-
-        # NOTE
-        # In the future we will probably move towards a version where
-        # instead of a majority vote we will randomly (seeded) select one HMM per fold
-        # this avoids a) the performance penalty for running all HMMs
-        # b) it avoids the difficulties of merging regions and potentially having to avg
-
-        # Emulate scipy.stats.mstats.gmean
-        def gmean(iterable):
-            if all(x == 0 for x in iterable):
-                return 0
-            else:
-                return(geometric_mean(iterable))
-
-        numFolds = list(df['num_folds'])[0]
-        if (np.isnan(numFolds)):
-            numFolds = 1
-        foldCutoff = round(numFolds/2)
-
-        if all(df['pvalue'] == 0):
-            df['pvalue'] = 1E-500
-        else:
-            smallestNonZero = min([x for x in df['pvalue'] if x > 0])
-            df['pvalue'] = [x if x > 0 else smallestNonZero for x in df['pvalue']]
-        #numberFolds = len(list(set(list(df['fold']))))
-        ranges = [list(range(x,y)) for x, y in zip(df['start'], df['end'])]
-        cc = collections.defaultdict(int)
-        # Get geomtric mean p-value over folds within a residue
-        p_vals = list(df['pvalue'])
-        p_vals_dict = collections.defaultdict(list)
-        for i_r in range(len(ranges)):
-            for i in ranges[i_r]:
-                cc[i] += 1
-                p_vals_dict[i].append(p_vals[i_r])
-        for index, entry in p_vals_dict.items():
-            p_vals_dict[index] = gmean(entry)
-        # Merge ranges
-        ranges = []
-        currentRange = []
-        oldKey = None
-        for key in sorted(cc):
-            value = cc[key]
-            if value > foldCutoff:
-                if oldKey is None or (oldKey+1) == key :
-                    currentRange.append(key)
-                else:
-                    #print('appending range')
-                    if len(currentRange) > 1:
-                        ranges.append(currentRange)
-                    currentRange = []
-                oldKey = key
-        if len(currentRange) > 1:
-            ranges.append(currentRange)
-        ranges = [range(x[0], x[-1]) for x in ranges]
-        # Get get geomtric mean of p-values within a range
-        pvals_fin = []
-        tmp = []
-        for r in ranges:
-            for i in r:
-                tmp.append(p_vals_dict[i])
-            pvals_fin.append(gmean(tmp))
-        ranges = [list(x) for x in ranges]
-        #return(ranges)
-        ranges = [[x[0], x[-1]] for x in ranges]
-        out = pd.DataFrame({"sequenceID" : [list(df['sequenceID'])[0]] * len(ranges),
-                        "start" : [x[0] for x in ranges],
-                        "end" : [x[1] for x in ranges],
-                        'pvalue' : pvals_fin,
-                            # CAREFUL: This only makes sense if you group by family, otherwise this will introduce bugs!
-                        'family' : [list(df['family'])[0]] * len(ranges)})
-        return(out)
 
 
 class CazyResultsTable:
@@ -568,6 +393,9 @@ class CazyResultsTable:
             tbl_data["end"].append(hit.end)
             tbl_data["pvalue"].append(hit.pvalue)
 
+        if not tbl_data:
+            raise ValueError("Did not get any hits!")
+
         df = (
             polars.from_dict(
                 data=tbl_data,
@@ -587,8 +415,8 @@ class CazyResultsTable:
         )
         return CazyResultsTable(df)
 
-    def apply_thresholds(self, thresholds: ThresholdTable) -> polars.DataFrame:
-        t = (
+    def apply_thresholds(self, thresholds: ThresholdTable) -> CazyResultsTable:
+        self.table = (
             self.table
             .join(
                 other=thresholds.table,
@@ -613,11 +441,58 @@ class CazyResultsTable:
                     polars.col("median_cutoff")
                 ).alias("cutoff")
             )
-            .drop("median_cutoff")
             # filter by fold and family specific pvalue treshold
             .filter(polars.col("pvalue")<polars.col("cutoff"))
+            .select(self.schema.names())
         )
-        return t
+        return self
+
+    @staticmethod
+    def _disentangle_group(
+        gene_group_df: polars.DataFrame,
+        start_col_name: str,
+        end_col_name: str,
+        threshold_column: str,
+    ) -> polars.DataFrame:
+
+        domains = gene_group_df.to_dicts()
+        domains_to_keep = []
+        while domains:
+            domain = domains.pop()  # pop returns last domain
+            # find overlaps in remaining domains
+            # list of domain dicts
+            overlaps = [
+                other
+                for other in domains
+                if other[start_col_name] <= domain[end_col_name]
+                and domain[start_col_name] <= other[end_col_name]
+            ]
+
+            # keep domain only if no overlaps or its pvalue < min pvalue in overlaps
+            if not overlaps or domain[threshold_column] < min(
+                d[threshold_column] for d in overlaps
+            ):
+                domains_to_keep.append(domain)
+                # remove all overlapping domains from remaining
+
+                domains = [d for d in domains if d not in overlaps]
+
+        return polars.DataFrame(domains_to_keep)
+
+    def disentangle_domains(
+        self,
+    ) -> CazyResultsTable:
+
+        def wrapper(group_df: polars.DataFrame) -> polars.DataFrame:
+            return self._disentangle_group(
+                group_df,
+                start_col_name="start",
+                end_col_name="end",
+                threshold_column="pvalue",
+            )
+
+        self.table = self.table.group_by("sequenceID").map_groups(wrapper)
+        return self
 
 
 class ThresholdTable:
@@ -669,16 +544,14 @@ class ThresholdTable:
     @property
     def hmms_which_will_be_skipped(self) -> List[str]:
         """
-        Identify the HMMs for which only some members of the family have a treshold
-        I do this because hits to these hmms will be skipped silently in cayman
-        In order to replicate this behaviour,
-        it is most efficient to simply never annotate with these hmms in the first place
+        If only some folds of a CAZy family have thresholds,
+        hits to those HMMs without thresholds are discarded.
+
+        This function identifies the HMMs missing from the treshold table (which
+        therefore lack a threshold). Computationally, it is most efficient to simply
+        never annotate with these hmms in the first place
 
         Returns list of str of hmm names
-
-        Note:
-            - I make no judgement on wether this is wise or not
-            (actually I think its stupid but whatever)
         """
         # make a df of all the families with cutoffs
         # and all the folds that should be there

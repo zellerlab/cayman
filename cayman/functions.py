@@ -5,7 +5,6 @@
 import logging
 import os
 import pathlib
-import errno
 
 # pylint: disable=W0611
 from gqlib.db.db_import import SmallDatabaseImporter
@@ -123,18 +122,37 @@ def run_proteome_annotation(args):
     if args.cutoffs is None:
         args.cutoffs = os.path.join(args.hmmdb, "cutoffs.csv")
 
+    logger.info("Loading HMM Tresholds...")
+    tresholds = ThresholdTable.load(args.cutoffs)
+
     logger.info("Reading HMMs...")
-    annotator = CazyAnnotator(
-        hmms=HMMLoader.read_hmms(
-            hmmdb_path=pathlib.Path(args.hmmdb),
-            # file_with_paths=pathlib.Path(args.file_with_hmm_paths), # TODO
+
+    # The selection of hmms depends on the seed. If the seed is the default,
+    # it is more efficient to load pre-selected hmms from an h3m file since
+    # we can skip selection and also dont have to materialize the hmms before selection.
+
+    if pathlib.Path(args.hmmdb).is_file():
+        filehash = HMMLoader.md5_of_file(pathlib.Path(args.hmmdb))
+
+    if args.seed == 42 and filehash == "d41d8cd98f00b204e9800998ecf8427e": # default
+        annotator = CazyAnnotator(
+            hmms=HMMLoader.read_hmms(
+                hmmdb_path=pathlib.Path(args.hmmdb),
+                seed=args.seed,
+                # file_with_paths=pathlib.Path(args.file_with_hmm_paths),
+            ),
         )
-    )
+    else:
+        annotator = CazyAnnotator(
+            hmms=HMMLoader.read_hmms(
+                hmmdb_path=pathlib.Path(args.hmmdb),
+                seed=args.seed,
+                blacklist=tresholds.hmms_which_will_be_skipped,
+                # file_with_paths=pathlib.Path(args.file_with_hmm_paths), # TODO
+            ),
+        )
     logger.info("Reading sequences...")
     seqs = Sequences.read_sequences_from_file(path=args.proteins)
-    
-    logger.info("Loading Tresholds...")
-    tresholds = ThresholdTable.load(args.cutoffs)
 
     logger.info("Annotating sequences (can take a few minutes; be patient)")
     results = annotator.annotate(
@@ -142,11 +160,13 @@ def run_proteome_annotation(args):
         threads=args.threads,
         blacklist=tresholds.hmms_which_will_be_skipped,
     )
-    logger.info("Filtering and merging annotations over folds")
-    annotations_filtered = annotator.curate_annotations(
-        thresholds=tresholds,
-        cazy_results=results,
+    logger.info("Filtering and disentangling annotations...")
+    annotations_filtered = (
+        annotator.curate_annotations(
+            thresholds=tresholds,
+            cazy_results=results,
+        )
     )
-    annotations_filtered.to_csv(args.output_file, index=False)
+    annotations_filtered.write_csv(args.output_file)
 
     return 0

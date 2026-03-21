@@ -58,6 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     annotate_proteome_ap.add_argument("--output_file", "-o", type=str, default="cazy_annotations.csv")
     annotate_proteome_ap.add_argument("--threads", "-t", type=int, default=1)
+    annotate_proteome_ap.add_argument("--seed", "-s", type=int, default=42)
     
 
     annotate_proteome_ap.set_defaults(func=run_proteome_annotation)
