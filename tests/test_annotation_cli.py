@@ -1,16 +1,13 @@
 import unittest
 import unittest.mock
-import errno
-import io
 import os
 import sys
 import tempfile
-import shutil
 import logging
 import pickle
 from pathlib import Path
 
-# TODO on older python versions, we require importlib.resrouces now
+# on older python versions, we require importlib.resrouces now
 try:
     from importlib.resources import files as resource_files
 except ImportError:
@@ -35,8 +32,12 @@ class Test_CLI(unittest.TestCase):
         cls._orig_annotate = cayman.annotate.crazy_annotator.CazyAnnotator._annotate
 
         cls.tempfile = tempfile.NamedTemporaryFile(suffix=".csv")
+        cls.tempfile2 = tempfile.NamedTemporaryFile(suffix=".csv")
         hmms_path = str(
             Path(resource_files(test_data).joinpath("hmms_bin", "cayman.v3.h3m")).resolve()  # ty:ignore[invalid-argument-type]
+        )
+        selected_hmms_path = str(
+            Path(resource_files(test_data).joinpath("hmms_bin", "cayman.v3.seed42_selected.h3m")).resolve()  # ty:ignore[invalid-argument-type]
         )
         proteins_fasta = str(
             Path(resource_files(test_data).joinpath("protein.faa")).resolve()  # ty:ignore[invalid-argument-type]
@@ -59,31 +60,26 @@ class Test_CLI(unittest.TestCase):
             else "1"
         ]
 
-        # cls.arguments_normal_with_pdb = [
-        #     "-i",
-        #     molecule_path,
-        #     "-t",
-        #     selected_template_dir,
-        #     "-o",
-        #     cls.tempfile.name,
-        #     "--pdbs",
-        #     str(Path(tempfile.gettempdir(), "pdbs").resolve()),
-        #     "--include-template",
-        # ]
-
-        # cls.bad_argument_6 = [
-        #     "-l",
-        #     list_path4,
-        #     "-o",
-        #     cls.tempfile.name,
-        # ]  # passing something which is not a PDB in the list
+        cls.arguments_preselected_hmms = [
+            "annotate_proteome",
+            selected_hmms_path,
+            proteins_fasta,
+            "--cutoffs",
+            cutoff_file,
+            "-o",
+            cls.tempfile2.name,
+            "-t",
+            str(max(len(os.sched_getaffinity(0))-2, 1))
+            if sys.platform == "linux"
+            else "1"
+        ]
 
         cls.maxDiff = None
 
     @classmethod
     def tearDownClass(cls):
         cls.tempfile.close()
-        # shutil.rmtree(Path(tempfile.gettempdir(), "pdbs"))
+        cls.tempfile2.close()
 
     def _search_hmm_mock(self, hmm, sequences, background):
         testdir = Path("tests/test_data/test_hits")
@@ -135,16 +131,15 @@ class Test_CLI(unittest.TestCase):
         #     new=self._annotate_mock
         # ):
         #     self.assertEqual(main(self.arguments_normal), 0)
-        self.assertEqual(main(self.arguments_normal), 0)
-
-        with open(
-            self.tempfile.name, "r"
-        ) as f:
-            actual = f.read()
 
         with resource_files(test_data).joinpath(
             "result.csv"
         ).open() as f:
             expected = f.read()
 
+        self.assertEqual(main(self.arguments_preselected_hmms), 0)
+        with open(
+            self.tempfile2.name, "r"
+        ) as f:
+            actual = f.read()
         self.assertMultiLineEqual(actual.strip(), expected.strip())
