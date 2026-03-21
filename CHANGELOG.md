@@ -16,6 +16,7 @@ This removes the need for per-residue merging of majority-vote annotations.
 - p-values now actually reflect the p-values calculated by HMMER.
 - overlaps between annotation hits are now resolved by selecting the more significat hit
 - API for `CazyResultsTable` methods `apply_thresholds` and `disentangle_domains` operate on self and return an instance of self
+- Some annotations previously surpressed due to majority voting are now reported
 
 ### Added
 - There is now an optional `--seed` argument in the cli for `annotate_proteome`
@@ -35,7 +36,6 @@ This removes the need for per-residue merging of majority-vote annotations.
     creating un-biological start-end coordinates as shown here.
 - No more doube geometric averaging of p-values over folds per residue and over residues in a sequence
 - Much faster annotation runtime -> Selecting 1 hmm per fold slashes runtime by factor 5
-- Some annotations which were being surpressed due to p-value avering (I think) are now being found
 
 
 ## [v0.11.0] - 2026-03-20
