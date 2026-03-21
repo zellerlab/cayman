@@ -14,12 +14,13 @@ Reads-Per-Kilobase-Million (RPKM) abundances for your sample. Cayman makes heavy
   - bwa
 
   The following python libraries need to be installed
-  - numpy
-  - pandas
-  - pysam
-  - intervaltree
+  - numpy (only for gqlib)
+  - pandas (only for gqlib)
+  - pysam (only for gqlib)
+  - intervaltree (only for gqlib)
   - gqlib>=2.14.3 (which should take care of all python library requirements)
   - pyhmmer (for protein set annotation)
+  - polars (for protein set annotation)
 
   You will need a `bwa` installation. One way -- if you didn't install `cayman` via bioconda or if you're not using a container -- would be to use `conda env create -f environment.yml` using the provided [environment.yml](environment.yml).
 
