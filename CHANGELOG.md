@@ -17,6 +17,8 @@ This removes the need for per-residue merging of majority-vote annotations.
 - overlaps between annotation hits are now resolved by selecting the more significat hit
 - API for `CazyResultsTable` methods `apply_thresholds` and `disentangle_domains` operate on self and return an instance of self
 - Some annotations previously surpressed due to majority voting are now reported
+- annotation results column "start_protein" renamed to "domain_start"
+- annotation results column "end_protein" renamed to "domain_end"
 
 ### Added
 - There is now an optional `--seed` argument in the cli for `annotate_proteome`

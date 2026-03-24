@@ -295,13 +295,13 @@ class CazyAnnotator:
             .disentangle_domains()
             .table
             .rename(
-                {"start": "start_protein", "end": "end_protein"}
+                {"start": "domain_start", "end": "domain_end"}
             )
             # Transform to nucleotide coordinates
             .with_columns(
-                start = polars.col("start_protein")*3 - 2,
-                end = polars.col("end_protein")*3 - 2,
-                annotLength = (polars.col("end_protein")-polars.col("start_protein"))*3
+                start = polars.col("domain_start")*3 - 2,
+                end = polars.col("domain_end")*3 - 2,
+                annotLength = (polars.col("domain_end")-polars.col("domain_start"))*3
             )
             # bring the columns in order
             .select(
@@ -312,11 +312,11 @@ class CazyAnnotator:
                     'pvalue',
                     'family',
                     'annotLength',
-                    'start_protein',
-                    'end_protein'
+                    'domain_start',
+                    'domain_end'
                 ]
             )
-            .sort(by=["sequenceID", "start_protein"])
+            .sort(by=["sequenceID", "domain_start"])
         )
         return annotations_filtered
 

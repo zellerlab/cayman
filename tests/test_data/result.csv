@@ -1,4 +1,4 @@
-sequenceID,start,end,pvalue,family,annotLength,start_protein,end_protein
+sequenceID,start,end,pvalue,family,annotLength,domain_start,domain_end
 AVQ14098.1,130,946,4.888148005180682e-19,AA7,816,44,316
 AVQ14151.1,28,607,1.7403980601440018e-56,GT30,579,10,203
 AVQ14223.1,1,790,7.032857596749614e-23,GT2,789,1,264
