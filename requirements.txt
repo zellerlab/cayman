@@ -1,3 +1,4 @@
 gqlib>=2.14.3
+numpy
 pyhmmer>=0.12
 polars>=1.38

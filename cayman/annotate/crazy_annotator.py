@@ -12,6 +12,7 @@ from pathlib import Path
 
 import polars
 import pyhmmer
+import numpy as np
 from pyhmmer.hmmer import hmmsearch
 
 
@@ -455,29 +456,19 @@ class CazyResultsTable:
         threshold_column: str,
     ) -> polars.DataFrame:
 
-        domains = gene_group_df.to_dicts()
-        domains_to_keep = []
-        while domains:
-            domain = domains.pop()  # pop returns last domain
-            # find overlaps in remaining domains
-            # list of domain dicts
-            overlaps = [
-                other
-                for other in domains
-                if other[start_col_name] <= domain[end_col_name]
-                and domain[start_col_name] <= other[end_col_name]
-            ]
+        df = gene_group_df.sort(threshold_column)
+        starts = df[start_col_name].to_numpy()
+        ends = df[end_col_name].to_numpy()
+        n = len(starts)
+        keep = np.ones(n, dtype=bool)
 
-            # keep domain only if no overlaps or its pvalue < min pvalue in overlaps
-            if not overlaps or domain[threshold_column] < min(
-                d[threshold_column] for d in overlaps
-            ):
-                domains_to_keep.append(domain)
-                # remove all overlapping domains from remaining
+        for i in range(n):
+            if not keep[i]:
+                continue
+            # mask out everything overlapping domain i
+            keep[i+1:] &= (ends[i+1:] < starts[i]) | (starts[i+1:] > ends[i])
 
-                domains = [d for d in domains if d not in overlaps]
-
-        return polars.DataFrame(domains_to_keep)
+        return df.filter(keep)
 
     def disentangle_domains(
         self,
