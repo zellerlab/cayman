@@ -6,7 +6,7 @@ from typing import Optional, List
 # pylint: disable=W0611
 
 from gqlib import __version__ as gqlib_version
-from .handle_args import build_parser, set_log_lvl_from_args
+from .handle_args import build_parser, set_log_lvl_from_args, validate_args
 from . import __version__
 
 
@@ -25,5 +25,7 @@ def main(argv: Optional[List[str]] = None):
         "Command: %s %s",
         os.path.basename(sys.argv[0]), " ".join(sys.argv[1:])
     )
+
+    args = validate_args(args, logger=logger)
 
     return args.func(args)

@@ -1,9 +1,7 @@
 # pylint: disable=C0103,C0301,C0116
 
 """ module docstring """
-
 import logging
-import os
 import pathlib
 import errno
 
@@ -20,29 +18,34 @@ logger = logging.getLogger(__name__)
 
 def run_profile(args):
 
-    if args.db_format is not None:
-        logger.warning("Argument --db_format is deprecated and will be removed in a future version. Database format is now automatically detected.")
+    # ------------------------ validate inputs and args --------------------------------
+    if args.input_type == "fastq":
+        input_data = check_input_reads(
+            fwd_reads=args.reads1,
+            rev_reads=args.reads2,
+            single_reads=args.singles,
+            orphan_reads=args.orphans,
+        )
 
-    input_data = check_input_reads(
-        args.reads1, args.reads2,
-        args.singles, args.orphans,
-    )
+        if not check_bwa_index(args.bwa_index):
+            raise ValueError(f"{args.bwa_index} is not a valid bwa index.")
 
-    if not os.path.exists(args.annotation_db):
+    else:
+        input_file = args.bam if args.input_type == "bam" else args.sam
+        if not pathlib.Path(input_file).is_file():
+            raise ValueError(f"{input_file} does not not exist!")
+
+    if not pathlib.Path(args.annotation_db).is_file():
         raise ValueError(
             f"{args.annotation_db} is not a valid annotation database"
         )
 
-    if not check_bwa_index(args.bwa_index):
-        raise ValueError(f"{args.bwa_index} is not a valid bwa index.")
-
-    if os.path.dirname(args.out_prefix):
-        pathlib.Path(os.path.dirname(args.out_prefix)).mkdir(
-            exist_ok=True, parents=True
-        )
+    if pathlib.Path(args.out_prefix).parent != pathlib.Path('.'):
+        pathlib.Path(args.out_prefix).parent.mkdir(parents=True, exist_ok=True)
 
     db_format = None
-    with open(args.annotation_db) as db_in:
+    with open(args.annotation_db, "r") as db_in:
+        print(args.annotation_db)
         for line in db_in:
             line = line.strip()
             if line and line[0] != "#":
@@ -58,6 +61,9 @@ def run_profile(args):
     
     logger.info("Identified database format as `%s`.", db_format)
 
+    # --------------------------- Load Database and Quanifier --------------------------
+
+    # for the domain mode counting, we need the SmallDatabaseImporter with "cazy"
     db_importer = SmallDatabaseImporter(
         logger, args.annotation_db, single_category="cazy", db_format=db_format,
     )
@@ -70,50 +76,77 @@ def run_profile(args):
         reference_type="domain",
     )
 
-    aln_runner = BwaMemRunner(
-        args.cpus_for_alignment,
-        args.bwa_index,
-        sample_id=os.path.basename(args.out_prefix),
-    )
+    # ------------------------------ Dealing with FastQ input --------------------------
+    if args.input_type == "fastq":
 
-    for input_type, *reads in input_data:
-
-        logger.info("Running %s alignment: %s", input_type, ",".join(reads))
-        proc, call = aln_runner.run(
-            reads,
-            single_end_reads=input_type == "single",
+        # NOTE could also allow use of minimap2 here
+        aln_runner = BwaMemRunner(
+            args.threads,
+            args.bwa_index,
+            sample_id=pathlib.Path(args.out_prefix).name,
         )
 
-        try:
-            profiler.count_alignments(
-                proc.stdout,
-                aln_format="sam",
-                min_identity=args.min_identity,
-                min_seqlen=args.min_seqlen,
+        for input_type, *reads in input_data:
+
+            logger.info("Running %s alignment: %s", input_type, ",".join(reads))
+            proc, call = aln_runner.run(
+                reads,
+                single_end_reads=input_type == "single",
+                alignment_file=args.keep_alignment_file,
             )
 
-        except Exception as err:
-            if isinstance(err, ValueError) and str(err).strip() == "file does not contain alignment data":
-                # pylint: disable=W1203
-                logger.error("Failed to align. This could have different reasons:")
-                logger.error(f"* Is `{args.aligner}` installed and on the path? Type `bwa mem` and see what happens.")
-                logger.error("* Syntax errors or missing files. Please try running the aligner call below manually to troubleshoot the problem.")
-                logger.error("* Alignment stream was interrupted, perhaps due to a memory issue.")
-                
+            try:
+                profiler.count_alignments(
+                    aln_stream=proc.stdout,
+                    aln_format="sam",
+                    min_identity=args.min_identity,
+                    min_seqlen=args.min_seqlen,
+                )
+
+            except Exception as err:
+                if isinstance(err, ValueError) and str(err).strip() == "file does not contain alignment data":
+                    # pylint: disable=W1203
+                    logger.error("Failed to align. This could have different reasons:")
+                    logger.error(f"* Is `{args.aligner}` installed and on the path? Type `bwa mem` and see what happens.")
+                    logger.error("* Syntax errors or missing files. Please try running the aligner call below manually to troubleshoot the problem.")
+                    logger.error("* Alignment stream was interrupted, perhaps due to a memory issue.")
+                    
+                    logger.error("Aligner call was:")
+                    logger.error("%s", call)
+                    
+                    return 1
+
+                logger.error("Encountered problems digesting the alignment stream:")
+                logger.error("%s", err)
                 logger.error("Aligner call was:")
                 logger.error("%s", call)
+                logger.error("Shutting down.")
                 
                 return 1
 
-            logger.error("Encountered problems digesting the alignment stream:")
-            logger.error("%s", err)
-            logger.error("Aligner call was:")
-            logger.error("%s", call)
-            logger.error("Shutting down.")
-            
-            return 1
+    # -------------------- dealing with SAM or BAM input -------------------------------
+    else:
+        input_file = args.bam if args.input_type == "bam" else args.sam
 
-    profiler.finalise(restrict_reports=("raw", "rpkm",))
+        logger.info("Profiling %s alignment:", input_file)
+
+        profiler.count_alignments(
+            aln_stream=input_file,
+            aln_format=args.input_type,
+            min_identity=args.min_identity,
+            min_seqlen=args.min_seqlen,
+            external_readcounts=args.import_readcounts,
+            unmarked_orphans=args.unmarked_orphans,
+        )
+
+    # ---------------------- Finalize the output ---------------------------------------
+
+    profiler.finalise(
+        restrict_reports=("raw", "rpkm",),
+        report_category=False,
+        report_unannotated=False,
+        dump_counters=args.debug,
+    )
 
     return 0
 
@@ -121,7 +154,7 @@ def run_profile(args):
 def run_proteome_annotation(args):
 
     if args.cutoffs is None:
-        args.cutoffs = os.path.join(args.hmmdb, "cutoffs.csv")
+        args.cutoffs = pathlib.Path(args.hmmdb, "cutoffs.csv")
 
     logger.info("Reading HMMs...")
     annotator = CazyAnnotator(

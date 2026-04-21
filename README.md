@@ -55,20 +55,27 @@ Typical installation time is a couple minutes. This mostly depends on the availa
 
 Cayman can be run from the command line as follows:
 
-**Attention: As of version 0.10.0, cayman profiling is invoked with `cayman profile` instead of `cayman`.**
 
-```
+> [!WARNING]  
+> As of version 0.10.0, cayman profiling is invoked with `cayman profile` instead of `cayman`
+
+```bash
 cayman profile \
   <input_options> \
   </path/to/annotation_db> \
-  </path/to/bwa_index> \
+  [--bwa_index </path/to/bwa_index>] \
   [--out_prefix <prefix>] \
   [--min_identity <float>] \
   [--min_seqlen <int>] \
-  [--cpus_for_alignment <int>]
+  [--threads <int>]
 ```
 
-### Mandatory parameters
+> [!IMPORTANT]  
+> Since v0.13.0 cayman profiling can be run from `fastq` input or from an alignment file. Currently `.sam` and `.bam` alignments are supported.
+
+* `</path/to/annotation_db>` is the path to a 4-column text file containing the reference domain annotation. (using the bed4 format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
+
+### Parameters for fastQ input
 
 * `<input_options>`
 
@@ -78,20 +85,25 @@ cayman profile \
       * Paired-end data can be specified with `-1 </path/to/reads1> -2 </path/to/reads2>`. Each read will be counted as `0.5`.
       * Single-end data can be specified with `--singles </path/to/reads>`. Each read will be counted as `1`.
       * Orphaned reads, i.e. paired-end reads that have lost their mate during an upstream quality control step, can be specified with `--orphans </path/to/orphans>`. Each read will be counted as `0.5`.
+
+      If you supply fastQ reads, you need to supply a path to the gene catalog bwa index.
+      * `--bwa_index </path/to/bwa_index>`
  
   3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `-1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq -2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`)!
-
 
   4. The choice of assigning an unpaired read set to be "true" single-end reads or orphan reads influences the read count distribution.
 
       * A read pair gets assigned a count of `2 x 0.5 = 1` (as both reads of a pair are derived from the same sequenced nucleic acid fragment.)
       * An orphan read gets assigned a count of `1 x 0.5 = 0.5`.
       * A read from a single-end library gets assigned a count of `1`.
-  
 
-* `</path/to/annotation_db>` is the path to a 4-column text file containing the reference domain annotation. (using the bed4 format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
+### Parameters for Alignment input
 
-* `</path/to/bwa_index>` refers to the path to the gene catalog bwa index.
+  1. `<input_options>` may be one of either `--sam` or `--bam` alignment files
+
+  2. Optional `--unmarked_orphans` flag to ensure that alignments from unmarked orphan reads (from preprocessing) are properly accounted for
+
+  3. Optional `--import_readcounts` `<int>` to normalize for externally derived readcounts for prefiltered bam files
 
 ### Optional parameters
 
@@ -101,7 +113,9 @@ cayman profile \
   
 * `--min_seqlen` is the minimum alignment length (actually aligned bases without soft/hard-clipping) to be included (default: 45[bp]).
 
-* `--cpus_for_alignment` the number of cpus to use for alignment (default: 1).
+* `--threads` the number of cpus to use for alignment (default: 1).
+
+* `--keep_alignment_file` `<path>` Only if reads were passed as input; Save the alignment as a SAM file to this location
 
 * `--db_format [DEPRECATED]` determines the format of the cazy annotation db. This can either be `hmmer` (comma-separated with 1-based coordinates) or `bed` (tab-separated with 0-based start coordinate and 1-based end coordinate). As of v0.10.2, this parameter is no longer necessary and is only included to maintain backwards-compatibility with existing scripts.
 
@@ -129,7 +143,7 @@ The following lines contain the counts for each CAZy family present in the sampl
 - `<out_prefix>.aln_stats.txt` contains statistics on the alignments in the sample.
 
 
-## Annotating protein sets with Cayman hmms
+## Annotating protein sets with Cayman HMMs
 
 The default `hmm_database` can be obtained from [Zenodo](https://zenodo.org/records/17178430).
 
@@ -141,7 +155,9 @@ cayman annotate_proteome \
   [ -t/--threads <int> ] \
   [ --cutoffs <path/to/cutoff_values>, default: </path/to/cayman/hmm_database/cutoffs.csv>]
 ```
+### Optional parameters
 
+* `--seed` Default 42. Determines which HMM from which fold gets used for annotation.
 
 
 
