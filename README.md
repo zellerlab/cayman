@@ -86,10 +86,10 @@ cayman profile \
       * Single-end data can be specified with `--singles </path/to/reads>`. Each read will be counted as `1`.
       * Orphaned reads, i.e. paired-end reads that have lost their mate during an upstream quality control step, can be specified with `--orphans </path/to/orphans>`. Each read will be counted as `0.5`.
 
-      If you supply fastQ reads, you need to supply a path to the gene catalog bwa index.
+      If you supply fastQ reads, you need to supply a path to the gene catalog bwa index files (only basename without extensions).
       * `--bwa_index </path/to/bwa_index>`
  
-  3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `-1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq -2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`)!
+  3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `-1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq -2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`) and that reads within the files are in consistent order!
 
   4. The choice of assigning an unpaired read set to be "true" single-end reads or orphan reads influences the read count distribution.
 
