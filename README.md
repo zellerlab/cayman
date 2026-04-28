@@ -59,9 +59,9 @@ Cayman can be run from the command line as follows:
 
 ```
 cayman profile \
-  <input_options> \
   </path/to/annotation_db> \
   </path/to/bwa_index> \
+  <input_options> \
   [--out_prefix <prefix>] \
   [--min_identity <float>] \
   [--min_seqlen <int>] \
@@ -69,6 +69,10 @@ cayman profile \
 ```
 
 ### Mandatory parameters
+
+* `</path/to/annotation_db>` is the path to a file with CAZy domain annotations for the ORFs in the used gene catalogue. This can either be a CSV file containing the reference domain annotation as obtained from [Zenodo](https://zenodo.org/records/10473258/files/gene_catalogue_annotations.zip). Alternatively, the annotation can be provided as a BED4 file (4-column text file: contig,start-1,end,domain-type).
+
+* `</path/to/bwa_index>` refers to the path to the gene catalog bwa index.
 
 * `<input_options>`
 
@@ -81,17 +85,12 @@ cayman profile \
  
   3. Samples comprising multiple fastq files (e.g. from multiple lanes) can be provided as space-separated lists. In the case of paired-end reads, ensure that the order of the files matches (e.g. `-1 sampleX_lane1_R1.fq sampleX_lane2_R1.fq -2 sampleX_lane1_R2.fq sampleX_lane2_R2.fq`)!
 
-
   4. The choice of assigning an unpaired read set to be "true" single-end reads or orphan reads influences the read count distribution.
 
       * A read pair gets assigned a count of `2 x 0.5 = 1` (as both reads of a pair are derived from the same sequenced nucleic acid fragment.)
       * An orphan read gets assigned a count of `1 x 0.5 = 0.5`.
       * A read from a single-end library gets assigned a count of `1`.
   
-
-* `</path/to/annotation_db>` is the path to a 4-column text file containing the reference domain annotation. (using the bed4 format: contig,start,end,domain-type). This contains all the CAZy domain annotations for all ORFs in our gene catalog.
-
-* `</path/to/bwa_index>` refers to the path to the gene catalog bwa index.
 
 ### Optional parameters
 
